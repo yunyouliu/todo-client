@@ -4,26 +4,39 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-11-25 15:37:55
+ * @LastEditTime: 2024-12-22 21:01:27
  */
-import React, { useState } from "react";
+import React from "react";
 import "../../global.css";
 import "../assets/iconfont";
-import { Avatar, Layout, theme } from "antd";
+import { Layout, theme ,ConfigProvider} from "antd";
 import Sidebar from "@/components/index/sideBar";
-const { Header, Sider, Content } = Layout;
-const Layouts = () => {
+import { Outlet } from "umi";
+import zhCN from 'antd/locale/zh_CN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+dayjs.locale('zh-cn');
+
+const { Sider, Content } = Layout;
+
+interface MenuItem {
+  icon: string;
+  activeIcon: string;
+  label: string;
+  onClick?: () => void;
+}
+
+const Layouts: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       icon: "renwu",
       activeIcon: "renwu-copy",
       label: "任务",
       onClick: () => console.log("任务"),
-       
     },
     {
       icon: "rilishitu",
@@ -61,6 +74,7 @@ const Layouts = () => {
     "https://profile-photo.s3.cn-north-1.amazonaws.com.cn/files/avatar/51270/MTAyNTQxMzgxNTFlc2Q2dmFx/avatar.png?v=ab117780915717552c6df1b7c243c26b";
 
   return (
+    <ConfigProvider locale={zhCN}>
     <div className="h-full">
       <Layout className="h-full">
         <Sider
@@ -72,10 +86,14 @@ const Layouts = () => {
           <Sidebar menuItems={menuItems} avatarSrc={avatarSrc} />
         </Sider>
         <Layout>
-          <Content>Content</Content>
+          <Content>
+            <Outlet />
+          </Content>
         </Layout>
       </Layout>
     </div>
+    </ConfigProvider>
   );
 };
+
 export default Layouts;

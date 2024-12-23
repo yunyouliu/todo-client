@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-11-30 18:10:19
+ * @LastEditTime: 2024-12-22 14:02:53
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -26,12 +26,24 @@ export default defineConfig({
   routes: [
     {
       path: "/",
+      redirect: "/singin",
+      layout: false,
+    },
+    {
+      path: "/singin",
       component: "@/pages/login/login",
       layout: false,
     },
     {
-      path: "/home",
-      component: "home",
+      path: "/task",
+      component: "@/pages/task/task",
     },
+    {
+      path:"/matrix",
+      component:"@/pages/quadrantPage/QuadrantPage"
+    },{
+      path:"/calendar",
+      component:"@/pages/calendar/CalendarPage"
+    }
   ],
 });

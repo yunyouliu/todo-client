@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-21 15:33:30
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-11-27 18:16:11
+ * @LastEditTime: 2024-12-22 17:24:05
  */
 
 import React, { useState } from "react";
@@ -70,17 +70,26 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="flex flex-col items-center gap-5 mb-4">
         {/* 底部刷新图标 */}
-        <SyncOutlined
-
-          onClick={() => {
-            setFlag(!Flag);
-          }}
-          spin={Flag}
-          style={{fontSize: '24px'}}
-          className="text-gray-400 text-lg  cursor-pointer"
-        />
-        <Icon name="tongzhi" className="w-6 h-6 cursor-pointer" />
-        <Icon name="bangzhu" className="w-6 h-6 cursor-pointer" />
+        <Tooltip title="同步" placement="right" key="refresh">
+          <SyncOutlined
+            onClick={() => {
+              setFlag(!Flag);
+            }}
+            spin={Flag}
+            style={{ fontSize: "24px" }}
+            className="text-gray-400 text-lg  cursor-pointer"
+          />
+        </Tooltip>
+        <Tooltip title="通知" placement="right" key="info">
+          <>
+            <Icon name="tongzhi" className="w-6 h-6 cursor-pointer" />
+          </>
+        </Tooltip>
+        <Tooltip title="更多" placement="right" key="more">
+          <>
+            <Icon name="bangzhu" className="w-6 h-6 cursor-pointer" />
+          </>
+        </Tooltip>
       </div>
     </div>
   );

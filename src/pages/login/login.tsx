@@ -1,13 +1,39 @@
+/*
+ * @Descripttion:
+ * @version: 1.0.0
+ * @Author: yunyouliu
+ * @Date: 2024-11-16 14:16:24
+ * @LastEditors: yunyouliu
+ * @LastEditTime: 2024-12-21 20:04:47
+ */
 import React, { useState, useMemo, useCallback } from "react";
-import { Form, Input, Button, Typography, Space, Checkbox } from "antd";
-import { WechatOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Space,
+  Checkbox,
+  Popover,
+} from "antd";
+import {
+  WechatOutlined,
+  AppleFilled,
+  WechatWorkOutlined,
+  GithubOutlined,
+  WeiboCircleFilled,
+} from "@ant-design/icons";
 import "antd/dist/reset.css";
+import {  useNavigate } from "umi";
+
 
 const { Title, Link, Text } = Typography;
 
 const Index = () => {
   const [formType, setFormType] = useState("login"); // 表单类型：login, register, forgetPassword
-
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("123456");
+  const navigate = useNavigate();
   // 切换表单类型的公共函数
   const toggleFormType = useCallback(
     (type: "login" | "register") => {
@@ -30,6 +56,14 @@ const Index = () => {
     () => (formType === "login" ? "注册" : "登录"),
     [formType]
   );
+
+  const login=(username:string,password:string)=>{
+    if(username==="admin"&&password==="123456"){
+      navigate("/task")
+    }else{
+      alert("登录失败")
+    }
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -91,18 +125,20 @@ const Index = () => {
             <>
               <Form.Item
                 name="username"
+                initialValue={username}
                 rules={[{ required: true, message: "请输入手机号或邮箱" }]}
               >
                 <Input placeholder="手机号/邮箱" />
               </Form.Item>
               <Form.Item
                 name="password"
+                initialValue={password}
                 rules={[{ required: true, message: "请输入密码" }]}
               >
                 <Input.Password placeholder="密码" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit" block className="h-9">
+                <Button type="primary" htmlType="submit" block className="h-9" onClick={()=>login(username,password)}>
                   登录
                 </Button>
               </Form.Item>
@@ -207,9 +243,27 @@ const Index = () => {
               微信
             </Button>
             <div className="text-center">
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                更多登录方式
-              </Text>
+              <Popover
+                content={
+                  <div className="space-x-3">
+                    <AppleFilled
+                      twoToneColor="#eb2f96"
+                      style={{ fontSize: "20px" }}
+                    />
+                    <WeiboCircleFilled style={{ fontSize: "20px" }} />
+                    <GithubOutlined style={{ fontSize: "20px" }} />
+                  </div>
+                }
+                placement="bottom"
+              >
+                <Text
+                  type="secondary"
+                  style={{ fontSize: "12px" }}
+                  className="cursor-pointer"
+                >
+                  更多登录方式
+                </Text>
+              </Popover>
             </div>
           </Space>
         )}

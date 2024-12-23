@@ -65,3 +65,24 @@
     background: #ddd;
   }
   
+  /* 自定义日历样式 */
+.custom-calendar .ant-picker-calendar-date-content {
+  @apply h-20 overflow-y-auto;
+}
+
+.custom-calendar .ant-picker-calendar-date {
+  @apply p-1;
+}
+
+.custom-calendar .ant-picker-cell {
+  @apply hover:bg-gray-50;
+}
+
+.custom-calendar .ant-picker-calendar-header {
+  @apply hidden;
+}
+
+/* 隐藏滚动条但保持功能 */
+.custom-calendar .ant-picker-calendar-date-content::-webkit-scrollbar {
+  @apply w-0 h-0;
+}
