@@ -4,19 +4,20 @@
  * @Author: yunyouliu
  * @Date: 2024-11-21 15:33:30
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-22 17:24:05
+ * @LastEditTime: 2024-12-31 09:57:05
  */
 
 import React, { useState } from "react";
 import { Avatar, Tooltip } from "antd";
 import { SyncOutlined } from "@ant-design/icons";
 import Icon from "@/components/index/icon"; // 自定义图标组件的路径
+import { useNavigate } from "umi";
 
 interface MenuItem {
   icon: string; // 图标名称
   activeIcon: string; // 激活时的图标名称
   label: string; // 菜单标题
-  onClick?: () => void; // 点击事件
+  path: string; // 菜单路径
 }
 
 interface SidebarProps {
@@ -32,9 +33,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [Flag, setFlag] = useState<boolean>(false);
-  const handleMenuItemClick = (index: number, onClick?: () => void) => {
+  const naviugate = useNavigate();
+  const handleMenuItemClick = (index: number, path: string) => {
     setActiveIndex(index); // 设置当前激活的菜单索引
-    if (onClick) onClick(); // 触发菜单项的点击事件
+    // 触发菜单项的点击事件
+    naviugate(path);
   };
 
   return (
@@ -51,17 +54,22 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* 菜单图标 */}
       <ul className="flex-1 flex flex-col items-center gap-4">
         {menuItems.map((item, index) => (
-          <Tooltip title={item.label} placement="right" key={index}>
+          <Tooltip
+            title={item.label}
+            placement="right"
+            key={index}
+            trigger={["hover"]}
+          >
             <li
               key={index}
               className={`w-8 h-8 flex justify-center items-center cursor-pointer rounded-full`}
               onClick={(e) => {
-                handleMenuItemClick(index, item.onClick);
+                handleMenuItemClick(index, item.path);
               }}
             >
               <Icon
                 name={activeIndex === index ? item.activeIcon : item.icon}
-                className="w-6 h-6"
+                size={25}
               />
             </li>
           </Tooltip>
@@ -82,12 +90,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Tooltip>
         <Tooltip title="通知" placement="right" key="info">
           <>
-            <Icon name="tongzhi" className="w-6 h-6 cursor-pointer" />
+            <Icon name="tongzhi1" className="cursor-pointer" size={35} />
           </>
         </Tooltip>
         <Tooltip title="更多" placement="right" key="more">
           <>
-            <Icon name="bangzhu" className="w-6 h-6 cursor-pointer" />
+            <Icon name="yiwen" className="cursor-pointer" size={28} />
           </>
         </Tooltip>
       </div>

@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-22 14:02:53
+ * @LastEditTime: 2024-12-23 11:44:16
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -44,6 +44,9 @@ export default defineConfig({
     },{
       path:"/calendar",
       component:"@/pages/calendar/CalendarPage"
+    },{
+      path:"/focus",
+      component:"@/pages/focus/focus"
     }
   ],
 });

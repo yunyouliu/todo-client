@@ -1,11 +1,3 @@
-/*
- * @Descripttion:
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2024-11-16 14:16:24
- * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-21 20:04:47
- */
 import React, { useState, useMemo, useCallback } from "react";
 import {
   Form,
@@ -24,8 +16,7 @@ import {
   WeiboCircleFilled,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
-import {  useNavigate } from "umi";
-
+import { useNavigate } from "umi";
 
 const { Title, Link, Text } = Typography;
 
@@ -57,13 +48,13 @@ const Index = () => {
     [formType]
   );
 
-  const login=(username:string,password:string)=>{
-    if(username==="admin"&&password==="123456"){
-      navigate("/task")
-    }else{
-      alert("登录失败")
+  const login = (username: string, password: string) => {
+    if (username === "admin" && password === "123456") {
+      navigate("/task");
+    } else {
+      alert("登录失败");
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -138,7 +129,13 @@ const Index = () => {
                 <Input.Password placeholder="密码" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit" block className="h-9" onClick={()=>login(username,password)}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  className="h-9"
+                  onClick={() => login(username, password)}
+                >
                   登录
                 </Button>
               </Form.Item>

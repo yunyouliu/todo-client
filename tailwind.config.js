@@ -28,4 +28,5 @@ module.exports = {
       // => @media (min-width: 1280px) { ... }
     },
   },
+  darkMode: "media", // or 'media' or 'class'
 };

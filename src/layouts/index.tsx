@@ -4,26 +4,27 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-22 21:01:27
+ * @LastEditTime: 2024-12-25 18:53:15
  */
 import React from "react";
 import "../../global.css";
 import "../assets/iconfont";
-import { Layout, theme ,ConfigProvider} from "antd";
+import { Layout, theme, ConfigProvider } from "antd";
 import Sidebar from "@/components/index/sideBar";
 import { Outlet } from "umi";
-import zhCN from 'antd/locale/zh_CN';
-import dayjs from 'dayjs';
-import 'dayjs/locale/zh-cn';
-dayjs.locale('zh-cn');
+import zhCN from "antd/locale/zh_CN";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
+dayjs.locale("zh-cn");
 
 const { Sider, Content } = Layout;
 
+// 菜单项
 interface MenuItem {
   icon: string;
   activeIcon: string;
   label: string;
-  onClick?: () => void;
+  path: string;
 }
 
 const Layouts: React.FC = () => {
@@ -36,37 +37,37 @@ const Layouts: React.FC = () => {
       icon: "renwu",
       activeIcon: "renwu-copy",
       label: "任务",
-      onClick: () => console.log("任务"),
+      path: "/task",
     },
     {
       icon: "rilishitu",
       activeIcon: "rilishitu-copy",
-      label: "日程",
-      onClick: () => console.log("日程"),
+      label: "日历视图",
+      path: "/calendar",
     },
     {
       icon: "dibutubiao-sixiangxian",
       activeIcon: "dibutubiao-sixiangxian-copy",
-      label: "设置",
-      onClick: () => console.log("设置"),
+      label: "四象限",
+      path: "/matrix",
     },
     {
       icon: "zhuanzhumoshi",
       activeIcon: "zhuanzhumoshi-copy",
-      label: "专注",
-      onClick: () => console.log("专注"),
+      label: "番茄专注",
+      path: "/focus",
     },
     {
       icon: "daka-copy",
       activeIcon: "daka",
-      label: "打卡",
-      onClick: () => console.log("打卡"),
+      label: "习惯打卡",
+      path: "/habit",
     },
     {
       icon: "ss",
       activeIcon: "ss-copy",
       label: "搜索",
-      onClick: () => console.log("搜索"),
+      path: "/search",
     },
   ];
 
@@ -75,23 +76,23 @@ const Layouts: React.FC = () => {
 
   return (
     <ConfigProvider locale={zhCN}>
-    <div className="h-full">
-      <Layout className="h-full">
-        <Sider
-          trigger={null}
-          width={48}
-          theme="light"
-          className="hidden tablet:flex"
-        >
-          <Sidebar menuItems={menuItems} avatarSrc={avatarSrc} />
-        </Sider>
-        <Layout>
-          <Content>
-            <Outlet />
-          </Content>
+      <div className="h-full">
+        <Layout className="h-full">
+          <Sider
+            trigger={null}
+            width={48}
+            theme="light"
+            className="hidden tablet:flex"
+          >
+            <Sidebar menuItems={menuItems} avatarSrc={avatarSrc} />
+          </Sider>
+          <Layout>
+            <Content>
+              <Outlet />
+            </Content>
+          </Layout>
         </Layout>
-      </Layout>
-    </div>
+      </div>
     </ConfigProvider>
   );
 };

@@ -1,62 +1,107 @@
-/*
- * @Descripttion: 
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2024-11-27 20:31:49
- * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-22 13:32:39
- */
-/*
- * @Descripttion:
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2024-11-27 20:31:49
- * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-22 13:16:04
- */
 import React, { useState } from "react";
-import { Splitter } from "antd";
+import { Splitter, Divider, Collapse } from "antd";
+import Icon from "@/components/index/icon";
+import Sidebar from "@/components/task/Sidebar";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 
+interface SidebarItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  count?: number;
+}
+
+const sidebarData: SidebarItem[] = [
+  {
+    key: "all",
+    icon: <Icon name="suoyou" size={20} />,
+    label: "所有",
+    count: 11,
+  },
+  {
+    key: "today",
+    icon: <Icon name={`day${new Date().getDate()}`} size={20} />,
+    label: "今天",
+    count: 1,
+  },
+  {
+    key: "tomorrow",
+    icon: <Icon name="mingtian" size={20} />,
+    label: "明天",
+  },
+  {
+    key: "week",
+    icon: (
+      <Icon
+        name={`icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`}
+        size={22}
+      />
+    ),
+    label: "最近7天",
+    count: 1,
+  },
+  {
+    key: "assigned",
+    icon: <Icon name="zhipai" size={20} />,
+    label: "指派给我",
+  },
+  {
+    key: "inbox",
+    icon: <Icon name="shoujixiang" size={20} />,
+    label: "收集箱",
+  },
+  {
+    key: "summary",
+    icon: <Icon name="zhaiyao" size={20} />,
+    label: "摘要",
+  },
+];
+
+const handleItemClick = (
+  key: string,
+  setActiveKey: React.Dispatch<React.SetStateAction<string>>
+) => {
+  setActiveKey(key);
+  console.log(`Clicked on: ${key}`);
+};
+
 const Task: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false); // 控制侧边栏折叠状态
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [activeKey, setActiveKey] = useState<string>("all");
 
   return (
     <div className="h-full">
-      <Splitter className="h-full shadow-sm">
-        {/* 左侧面板 */}
+      <Splitter className="h-full shadow-sm bg-white">
+        <Splitter.Panel
+          min="14%"
+          defaultSize={"24%"}
+          className={`${isCollapsed ? "hidden" : ""}`}
+        >
+          <Sidebar
+            data={sidebarData}
+            activeKey={activeKey}
+            onItemClick={(key) => handleItemClick(key, setActiveKey)}
+          />
+          <Divider />
+          
+        </Splitter.Panel>
 
-          <Splitter.Panel size={isCollapsed ? "0%" : "20%"} min="14%" max="31%">
-            <div className="p-4 bg-gray-100 h-full text-left">
-              <h3 className="text-lg font-semibold">菜单</h3>
-              <ul className="mt-4">
-                <li className="py-2">收集箱</li>
-                <li className="py-2">今天</li>
-                <li className="py-2">已完成</li>
-                <li className="py-2">垃圾桶</li>
-              </ul>
-            </div>
-          </Splitter.Panel>
-
-        {/* 右侧面板 */}
-        <Splitter.Panel min="26%" max="78%">
-          <div className="flex items-center p-3 ">
-            {/* 折叠/展开按钮 */}
+        <Splitter.Panel min="26%">
+          <div className="flex items-center p-3">
             {isCollapsed ? (
               <MenuUnfoldOutlined
-                className="text-xl cursor-pointer"
+                className="text-xl cursor-pointer text-gray-500"
                 onClick={() => setIsCollapsed(false)}
               />
             ) : (
               <MenuFoldOutlined
-                className="text-lg  cursor-pointer text-gray-500"
+                className="text-lg cursor-pointer text-gray-500"
                 onClick={() => setIsCollapsed(true)}
               />
             )}
-            <h2 className="ml-2 text-lg font-semibold mt-2">任务管理</h2>
+            <h2 className="ml-2 text-lg font-semibold mt-2">所有</h2>
           </div>
 
-          {/* 主体内容 */}
           <div className="p-4">
             <p>这里是主任务展示区域，可以动态加载内容。</p>
           </div>
