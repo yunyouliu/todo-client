@@ -1,14 +1,7 @@
-/*
- * @Descripttion:
- * @version: 1.0.1
- * @Author: yunyouliu
- * @Date: 2024-12-23 11:41:43
- * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-26 09:41:37
- */
 import React, { useState, useRef, useEffect } from "react";
 import { Progress, Button } from "antd";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
+import pomoAudio from "@/assets/pomo-v1.mp3"; // Import the audio file
 
 interface TimerProps {
   initialTime: number; // 初始倒计时时间，单位为秒
@@ -16,16 +9,19 @@ interface TimerProps {
 
 const Timer: React.FC<TimerProps> = ({ initialTime }) => {
   const [time, setTime] = useState(initialTime); // 动态倒计时
+  const [totalTime, setTotalTime] = useState(initialTime); // 总时间动态基准
   const [isRunning, setIsRunning] = useState(false); // 是否正在运行
   const [startTime, setStartTime] = useState(""); // 开始时间
   const [endTime, setEndTime] = useState(""); // 结束时间
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null); // 定时器引用
+  const audioRef = useRef(new Audio(pomoAudio)); // Create an Audio object
 
-  const status = !isRunning && !startTime;
+  const status = !isRunning && !startTime; // 状态
 
   // 计算进度条的百分比
-  const progressPercent = ((initialTime - time) / initialTime) * 100;
+  const progressPercent = ((totalTime - time) / totalTime) * 100;
 
+  // 格式化时间为 MM:SS
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -34,6 +30,7 @@ const Timer: React.FC<TimerProps> = ({ initialTime }) => {
       .padStart(2, "0")}`;
   };
 
+  // 获取时间字符串
   const getTimeString = (date: Date) => {
     return `${date.getHours().toString().padStart(2, "0")}:${date
       .getMinutes()
@@ -41,53 +38,12 @@ const Timer: React.FC<TimerProps> = ({ initialTime }) => {
       .padStart(2, "0")}`;
   };
 
-  // 启动或暂停计时器
-  const handleStartPause = () => {
-    if (isRunning) {
-      // 暂停计时
-      clearInterval(intervalRef.current!);
-      intervalRef.current = null;
-    } else {
-      // 设置开始和结束时间
-      if (!startTime) {
-        const now = new Date();
-        setStartTime(getTimeString(now));
-        const end = new Date(now.getTime() + time * 1000);
-        setEndTime(getTimeString(end));
-      }
-
-      // 开始计时
-      intervalRef.current = setInterval(() => {
-        setTime((prev) => {
-          if (prev <= 0.1) {
-            clearInterval(intervalRef.current!);
-            setIsRunning(false);
-            intervalRef.current = null;
-            alert("时间到！");
-            handleReset();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    setIsRunning(!isRunning);
-  };
-
-  // 重置计时器
-  const handleReset = () => {
-    clearInterval(intervalRef.current!);
-    intervalRef.current = null;
-    setTime(initialTime);
-    setStartTime("");
-    setEndTime("");
-    setIsRunning(false);
-  };
-
+  // 调整时间
   const handleAdjustTime = (adjustment: number) => {
     const newTime = time + adjustment;
     if (newTime > 0) {
       setTime(newTime);
+      setTotalTime((prevTotal) => prevTotal + adjustment); // 更新总时间基准
       if (startTime) {
         const now = new Date();
         const end = new Date(now.getTime() + newTime * 1000);
@@ -96,9 +52,57 @@ const Timer: React.FC<TimerProps> = ({ initialTime }) => {
     }
   };
 
+  // 启动/暂停
+  const handleStartPause = () => {
+    if (isRunning) {
+      clearInterval(intervalRef.current!);
+      intervalRef.current = null;
+    } else {
+      if (!startTime) {
+        const now = new Date();
+        setStartTime(getTimeString(now));
+        const end = new Date(now.getTime() + time * 1000);
+        setEndTime(getTimeString(end));
+      }
+      intervalRef.current = setInterval(() => {
+              setTime((prev) => {
+                if (prev <= 0.1) {
+                  clearInterval(intervalRef.current!);
+                  setIsRunning(false);
+                  intervalRef.current = null;
+                  playAudioAndAlert(); // Call the async function
+                  return 0;
+                }
+                return prev - 1;
+              });
+      
+        const playAudioAndAlert = async () => {
+          await audioRef.current.play(); // Play the audio
+          alert("时间到！");
+          handleReset();
+        };
+      }, 1000);
+    }
+    setIsRunning(!isRunning);
+  };
+
+  // 重置
+  const handleReset = () => {
+    clearInterval(intervalRef.current!);
+    intervalRef.current = null;
+    setTime(initialTime);
+    setTotalTime(initialTime);
+    setStartTime("");
+    setEndTime("");
+    setIsRunning(false);
+  };
+
   useEffect(() => {
     return () => clearInterval(intervalRef.current!);
   }, []);
+  useEffect(() => {
+    console.log("initialTime:", initialTime); // 调试用，查看初始时间
+  }, [initialTime]);
 
   return (
     <div className="flex flex-col m-auto items-center justify-center">

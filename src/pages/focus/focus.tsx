@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-12-23 11:42:26
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-29 10:56:06
+ * @LastEditTime: 2025-01-03 09:45:04
  */
 import React from "react";
 import Timer from "@/components/focus/Timer";
@@ -33,7 +33,7 @@ const Focus: React.FC = () => {
                 <Title level={4}>番茄专注</Title>
               </div>
               <div className="items-center justify-center mt-auto">
-                <Timer initialTime={1500} />
+                <Timer initialTime={10} />
               </div>
             </div>
           </Splitter.Panel>
@@ -53,7 +53,7 @@ const Focus: React.FC = () => {
               <Title level={4}>番茄专注</Title>
             </div>
             <div className="flex items-center justify-center flex-grow  will-change-transform">
-              <Timer initialTime={1500} />
+              <Timer initialTime={10} />
             </div>
           </div>
         </>

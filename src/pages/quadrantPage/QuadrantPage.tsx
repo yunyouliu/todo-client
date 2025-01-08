@@ -109,7 +109,7 @@ const QuadrantPage: React.FC = () => {
 
   return (
     <div className="h-full w-full">
-      <Title level={4} className="text-left  ml-4">
+      <Title level={4} className="text-left translate-y-3 ml-4">
         四象限
       </Title>
       <DragDropContext onDragEnd={handleDragEnd}>

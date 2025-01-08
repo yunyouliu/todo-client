@@ -1,8 +1,17 @@
+/*
+ * @Descripttion:
+ * @version: 1.0.0
+ * @Author: yunyouliu
+ * @Date: 2024-11-27 20:31:49
+ * @LastEditors: yunyouliu
+ * @LastEditTime: 2025-01-07 10:29:48
+ */
 import React, { useState } from "react";
 import { Splitter, Divider, Collapse } from "antd";
 import Icon from "@/components/index/icon";
-import Sidebar from "@/components/task/Sidebar";
+import Sidebar from "@/components/task/common/Sidebar";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Outlet, useNavigate } from "umi";
 
 interface SidebarItem {
   key: string;
@@ -57,18 +66,22 @@ const sidebarData: SidebarItem[] = [
   },
 ];
 
-const handleItemClick = (
-  key: string,
-  setActiveKey: React.Dispatch<React.SetStateAction<string>>
-) => {
-  setActiveKey(key);
-  console.log(`Clicked on: ${key}`);
-};
-
 const Task: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const [activeKey, setActiveKey] = useState<string>("all");
+  const [activeKey, setActiveKey] = useState<string>("tomorrow");
+  const [activeLabel, setActiveLabel] = useState<string>("明天");
+  const navigate = useNavigate();
 
+  const handleItemClick = (
+    key: string,
+    lable: string,
+    setActiveKey: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setActiveKey(key);
+    setActiveLabel(lable);
+    navigate(`/task/${key}`);
+    console.log(`Clicked on: ${key}`);
+  };
   return (
     <div className="h-full">
       <Splitter className="h-full shadow-sm bg-white">
@@ -76,14 +89,22 @@ const Task: React.FC = () => {
           min="14%"
           defaultSize={"24%"}
           className={`${isCollapsed ? "hidden" : ""}`}
+          resizable={!isCollapsed}
         >
           <Sidebar
             data={sidebarData}
             activeKey={activeKey}
-            onItemClick={(key) => handleItemClick(key, setActiveKey)}
+            onItemClick={(key, label) =>
+              handleItemClick(key, label, setActiveKey)
+            }
+            onDragEnd={(result) => console.log("Drag ended", result)}
           />
+
           <Divider />
-          
+          <a href="mailto:john.doe@example.com?subject=Meeting%20Reminder&body=Hi%20John,%0D%0ADon't%20forget%20about%20our%20meeting%20tomorrow%20at%2010%20AM.%0D%0AThanks!&cc=jane.doe@example.com&bcc=manager@example.com">
+            打开 Outlook 邮件
+          </a>
+          <Divider />
         </Splitter.Panel>
 
         <Splitter.Panel min="26%">
@@ -99,11 +120,11 @@ const Task: React.FC = () => {
                 onClick={() => setIsCollapsed(true)}
               />
             )}
-            <h2 className="ml-2 text-lg font-semibold mt-2">所有</h2>
+            <h2 className="ml-2 text-lg font-semibold mt-2">{activeLabel}</h2>
           </div>
 
-          <div className="p-4">
-            <p>这里是主任务展示区域，可以动态加载内容。</p>
+          <div className="">
+            <Outlet />
           </div>
         </Splitter.Panel>
         <Splitter.Panel min="20%">3</Splitter.Panel>

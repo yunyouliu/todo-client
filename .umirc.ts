@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-23 11:44:16
+ * @LastEditTime: 2025-01-05 10:12:20
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -37,6 +37,16 @@ export default defineConfig({
     {
       path: "/task",
       component: "@/pages/task/task",
+      routes: [
+        {
+          path: "/task/all/",
+          component:"@/pages/task/all.tsx"
+        },
+        {
+          path: "/task/all/:id",
+          component:"@/pages/task/all.tsx"
+        },
+      ],
     },
     {
       path:"/matrix",
