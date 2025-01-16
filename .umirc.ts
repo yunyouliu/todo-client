@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-05 10:12:20
+ * @LastEditTime: 2025-01-14 10:29:11
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -40,23 +40,25 @@ export default defineConfig({
       routes: [
         {
           path: "/task/all/",
-          component:"@/pages/task/all.tsx"
+          component: "@/pages/task/all.tsx",
         },
         {
           path: "/task/all/:id",
-          component:"@/pages/task/all.tsx"
+          component: "@/pages/task/all.tsx",
         },
       ],
     },
     {
-      path:"/matrix",
-      component:"@/pages/quadrantPage/QuadrantPage"
-    },{
-      path:"/calendar",
-      component:"@/pages/calendar/CalendarPage"
-    },{
-      path:"/focus",
-      component:"@/pages/focus/focus"
-    }
+      path: "/matrix",
+      component: "@/pages/quadrantPage/QuadrantPage",
+    },
+    {
+      path: "/calendar",
+      component: "@/pages/calendar/CalendarPage",
+    },
+    {
+      path: "/focus",
+      component: "@/pages/focus/focus",
+    },
   ],
 });

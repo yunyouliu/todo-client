@@ -4,13 +4,15 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-25 18:53:15
+ * @LastEditTime: 2025-01-16 10:34:38
  */
-import React from "react";
+import React, { useState } from "react";
 import "../../global.css";
 import "../assets/iconfont";
-import { Layout, theme, ConfigProvider } from "antd";
+import { Layout, theme, ConfigProvider, Drawer } from "antd";
 import Sidebar from "@/components/index/sideBar";
+import SideBar from "@/components/task/common/Sidebar";
+import Icon from "@/components/index/icon";
 import { Outlet } from "umi";
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
@@ -26,11 +28,86 @@ interface MenuItem {
   label: string;
   path: string;
 }
+interface SidebarItem {
+  key: string;
+  icon: string;
+  size: number;
+  label: string;
+  count?: number;
+}
+
+const sidebarData: SidebarItem[] = [
+  {
+    key: "all",
+    size: 18,
+    icon: "suoyou",
+    label: "所有",
+    count: 11,
+  },
+  {
+    key: "today",
+    icon: `day${new Date().getDate()}`, // 动态生成图标名称
+    label: "今天",
+    size: 18,
+    count: 1,
+  },
+  {
+    key: "tomorrow",
+    icon: "mingtian",
+    label: "明天",
+    size: 18,
+  },
+  {
+    key: "week",
+    icon: `icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`, // 动态生成图标名称
+    label: "最近7天",
+    size: 22,
+    count: 1,
+  },
+  {
+    key: "assigned",
+    icon: "zhipai",
+    label: "指派给我",
+    size: 18,
+  },
+  {
+    key: "inbox",
+    icon: "shoujixiang",
+    label: "收集箱",
+    size: 18,
+  },
+  {
+    key: "summary",
+    icon: "zhaiyao",
+    label: "摘要",
+    size: 18,
+  },
+];
+
+const buttomIcons: SidebarItem[] = [
+  { key: "1", icon: "renwu", size: 18, label: "已完成" },
+  { key: "2", icon: "fangqi", size: 20, label: "已放弃" },
+  { key: "3", icon: "lajitong", size: 18, label: "垃圾桶" },
+];
 
 const Layouts: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+  const [open, setOpen] = React.useState(true);
+  const [activeKey, setActiveKey] = useState<string>("tomorrow");
+  const [activeLabel, setActiveLabel] = useState<string>("明天");
+
+  const handleItemClick = (
+    key: string,
+    lable: string,
+    setActiveKey: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setActiveKey(key);
+    setActiveLabel(lable);
+    // navigate(`/task/${key}`);
+    console.log(`Clicked on: ${key}`);
+  };
 
   const menuItems: MenuItem[] = [
     {
@@ -75,8 +152,32 @@ const Layouts: React.FC = () => {
     "https://profile-photo.s3.cn-north-1.amazonaws.com.cn/files/avatar/51270/MTAyNTQxMzgxNTFlc2Q2dmFx/avatar.png?v=ab117780915717552c6df1b7c243c26b";
 
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        token: {
+          paddingLG: 0,
+        },
+      }}
+    >
       <div className="h-full">
+          <Drawer
+            placement="left"
+            width="76%"
+            onClose={() => setOpen(false)}
+            open={open}
+            closeIcon={null}
+          >
+            <SideBar
+              data={sidebarData}
+              bottomIcons={buttomIcons}
+              activeKey={activeKey}
+              onItemClick={(key, label) =>
+                handleItemClick(key, label, setActiveKey)
+              }
+              onDragEnd={(result) => console.log("Drag ended", result)}
+            />
+          </Drawer>
         <Layout className="h-full">
           <Sider
             trigger={null}

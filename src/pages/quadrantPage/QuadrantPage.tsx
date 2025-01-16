@@ -149,7 +149,7 @@ const QuadrantPage: React.FC = () => {
                           </div>
                         }
                         className="h-[328px] group cursor-pointer"
-                        styles={{header:{borderBottom:"none"}}}
+                        styles={{ header: { borderBottom: "none" } }}
                       >
                         <Droppable droppableId={quadrant.id} type="task">
                           {(provided) => (

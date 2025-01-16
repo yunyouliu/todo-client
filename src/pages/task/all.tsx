@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-01-04 20:02:11
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-08 11:49:36
+ * @LastEditTime: 2025-01-08 20:18:04
  */
 import React, { useState } from "react";
 import TextInput from "@/components/task/common/TextInput";
@@ -31,7 +31,7 @@ const All: React.FC = () => {
 
   const handlePriorityChange = (newPriority: string) => {
     setSelectedPriority(newPriority);
-    if (newPriority === "无优先级") return;
+    // if (newPriority === "无优先级") return;
     setTextValue((prevText) => {
       const priorityRegex = /\[.*?\]/;
       const existingPriorityMatch = prevText.match(priorityRegex);

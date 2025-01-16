@@ -4,18 +4,18 @@
  * @Author: yunyouliu
  * @Date: 2024-11-27 20:31:49
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-07 10:29:48
+ * @LastEditTime: 2025-01-15 22:10:13
  */
 import React, { useState } from "react";
-import { Splitter, Divider, Collapse } from "antd";
-import Icon from "@/components/index/icon";
+import { Splitter } from "antd";
 import Sidebar from "@/components/task/common/Sidebar";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Outlet, useNavigate } from "umi";
 
 interface SidebarItem {
   key: string;
-  icon: React.ReactNode;
+  icon: string;
+  size: number;
   label: string;
   count?: number;
 }
@@ -23,47 +23,55 @@ interface SidebarItem {
 const sidebarData: SidebarItem[] = [
   {
     key: "all",
-    icon: <Icon name="suoyou" size={20} />,
+    size: 18,
+    icon: "suoyou",
     label: "所有",
     count: 11,
   },
   {
     key: "today",
-    icon: <Icon name={`day${new Date().getDate()}`} size={20} />,
+    icon: `day${new Date().getDate()}`, // 动态生成图标名称
     label: "今天",
+    size: 18,
     count: 1,
   },
   {
     key: "tomorrow",
-    icon: <Icon name="mingtian" size={20} />,
+    icon: "mingtian",
     label: "明天",
+    size: 18,
   },
   {
     key: "week",
-    icon: (
-      <Icon
-        name={`icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`}
-        size={22}
-      />
-    ),
+    icon: `icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`, // 动态生成图标名称
     label: "最近7天",
+    size: 22,
     count: 1,
   },
   {
     key: "assigned",
-    icon: <Icon name="zhipai" size={20} />,
+    icon: "zhipai",
     label: "指派给我",
+    size: 18,
   },
   {
     key: "inbox",
-    icon: <Icon name="shoujixiang" size={20} />,
+    icon: "shoujixiang",
     label: "收集箱",
+    size: 18,
   },
   {
     key: "summary",
-    icon: <Icon name="zhaiyao" size={20} />,
+    icon: "zhaiyao",
     label: "摘要",
+    size: 18,
   },
+];
+
+const buttomIcons: SidebarItem[] = [
+  { key: "1", icon: "renwu", size: 18, label: "已完成" },
+  { key: "2", icon: "fangqi", size: 20, label: "已放弃" },
+  { key: "3", icon: "lajitong", size: 18, label: "垃圾桶" },
 ];
 
 const Task: React.FC = () => {
@@ -79,7 +87,7 @@ const Task: React.FC = () => {
   ) => {
     setActiveKey(key);
     setActiveLabel(lable);
-    navigate(`/task/${key}`);
+    // navigate(`/task/${key}`);
     console.log(`Clicked on: ${key}`);
   };
   return (
@@ -93,18 +101,13 @@ const Task: React.FC = () => {
         >
           <Sidebar
             data={sidebarData}
+            bottomIcons={buttomIcons}
             activeKey={activeKey}
             onItemClick={(key, label) =>
               handleItemClick(key, label, setActiveKey)
             }
             onDragEnd={(result) => console.log("Drag ended", result)}
           />
-
-          <Divider />
-          <a href="mailto:john.doe@example.com?subject=Meeting%20Reminder&body=Hi%20John,%0D%0ADon't%20forget%20about%20our%20meeting%20tomorrow%20at%2010%20AM.%0D%0AThanks!&cc=jane.doe@example.com&bcc=manager@example.com">
-            打开 Outlook 邮件
-          </a>
-          <Divider />
         </Splitter.Panel>
 
         <Splitter.Panel min="26%">

@@ -4,15 +4,18 @@
  * @Author: yunyouliu
  * @Date: 2024-12-23 11:42:26
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-03 09:45:04
+ * @LastEditTime: 2025-01-16 09:30:53
  */
 import React from "react";
 import Timer from "@/components/focus/Timer";
 import Overview from "@/components/focus/Overview";
 import Record from "@/components/focus/Record";
 import { Splitter, Typography } from "antd";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 const Focus: React.FC = () => {
   const { Title, Text } = Typography;
+  const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
+  const [activeKey, setActiveKey] = React.useState<string>("tomorrow");
   const mediaQuery = window.matchMedia("(min-width:499px)");
   const [tabletQuery, setTabletQuery] = React.useState<boolean>(
     mediaQuery.matches
@@ -49,8 +52,21 @@ const Focus: React.FC = () => {
       ) : (
         <>
           <div className="items-center justify-center w-full h-full">
-            <div className="p-5 text-left">
-              <Title level={4}>番茄专注</Title>
+            <div className="p-5 text-left flex">
+              {isCollapsed ? (
+                <MenuUnfoldOutlined
+                  className="text-xl cursor-pointer text-gray-500"
+                  onClick={() => setIsCollapsed(false)}
+                />
+              ) : (
+                <MenuFoldOutlined
+                  className="text-xl cursor-pointer text-gray-500"
+                  onClick={() => setIsCollapsed(true)}
+                />
+              )}
+              <Title level={4} className="align-middle mt-1 ml-2">
+                番茄专注
+              </Title>
             </div>
             <div className="flex items-center justify-center flex-grow  will-change-transform">
               <Timer initialTime={10} />

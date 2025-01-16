@@ -1,18 +1,73 @@
 /*
- * @Descripttion: 实现一个可拖拽的侧边栏组件
+ * @Descripttion:
  * @version: 1.0.0
  * @Author: yunyouliu
  * @Date: 2024-12-29 11:34:13
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-05 10:34:40
+ * @LastEditTime: 2025-01-16 10:38:20
  */
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { DashOutlined } from "@ant-design/icons";
+import { Divider, Collapse, ConfigProvider } from "antd";
+import type { CollapseProps } from "antd";
+import SidebarItem from "./SidebarItem";
+
+// 👋 欢迎💼 工作任务📦 购物清单	📖学习安排🎂生日提醒🏃锻炼计划🦄心愿清单🏡个人备忘
+const list = [
+  {
+    key: "1",
+    label: "👋 欢迎",
+    count: 12,
+  },
+  {
+    key: "2",
+    label: "💼 工作任务",
+    count: 5,
+  },
+  {
+    key: "3",
+    label: "📦 购物清单",
+    count: 8,
+  },
+  {
+    key: "4",
+    label: "📖 学习安排",
+    count: 3,
+  },
+  {
+    key: "5",
+    label: "🎂 生日提醒",
+    count: 2,
+  },
+  {
+    key: "6",
+    label: "🏃 锻炼计划",
+    count: 7,
+  },
+  {
+    key: "7",
+    label: "🦄 心愿清单",
+    count: 1,
+  },
+  {
+    key: "8",
+    label: "🏡 个人备忘",
+    count: 10,
+  },
+];
+
 // 定义侧边栏组件的属性接口
 interface SidebarProps {
   data: Array<{
+    size: number;
     key: string;
-    icon: React.ReactNode;
+    icon: string;
+    label: string;
+    count?: number;
+  }>;
+  bottomIcons: Array<{
+    size: number;
+    key: string;
+    icon: string;
     label: string;
     count?: number;
   }>;
@@ -24,57 +79,122 @@ interface SidebarProps {
 // 实现一个可拖拽的侧边栏组件
 const Sidebar: React.FC<SidebarProps> = ({
   data,
+  bottomIcons,
   activeKey,
   onItemClick,
   onDragEnd,
 }) => {
+  const handleItemClick = (key: string, label: string) => {
+    if (onItemClick) onItemClick(key, label);
+  };
+  // Collapse项配置
+  const items: CollapseProps["items"] = [
+    {
+      key: "1",
+      label: (
+        <div className="text-sm text-gray-400 group">
+          <span className="group-hover:text-pink-300"> 清单</span>
+          <span className="bg-gray-200 ml-2 text-xs p-0.5 rounded-lg">
+            已使用8/9
+          </span>
+          <div className="hidden group-hover:block align-top float-right"></div>
+        </div>
+      ),
+      children: (
+        <div>
+          {list.map((item) => (
+            <SidebarItem
+              key={item.key}
+              item={item}
+              isActive={activeKey === item.key}
+              onClick={() => handleItemClick(item.key, item.label)}
+            />
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <div className="hover:text-pink-300 text-sm text-gray-400">过滤器</div>
+      ),
+      children: <></>,
+    },
+    {
+      key: "3",
+      label: (
+        <div className="hover:text-pink-300 text-sm text-gray-400">标签</div>
+      ),
+      children: <></>,
+    },
+  ];
+
   return (
-    <DragDropContext onDragEnd={onDragEnd || (() => {})}>
-      <Droppable droppableId="sidebar">
-        {(provided) => (
-          <div
-            className="bg-white p-2"
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-          >
-            {data.map((item, index) => (
-              <Draggable key={item.key} draggableId={item.key} index={index}>
-                {(provided) => (
-                  // eslint-disable-line no-inline-style
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{
-                      cursor: "pointer",
-                      ...provided.draggableProps.style,
-                    }}
-                    className={`flex items-center p-3 cursor-pointer group focus:outline-none  hover:cursor-auto  hover:bg-gray-100 rounded-lg ${
-                      activeKey === item.key ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() =>
-                      onItemClick && onItemClick(item.key, item.label)
-                    }
+    <div className="select-none scroll-smooth">
+      <ConfigProvider theme={{ token: { paddingSM: 0 } }}>
+        <DragDropContext onDragEnd={onDragEnd || (() => {})}>
+          <Droppable droppableId="sidebar">
+            {(provided) => (
+              <div
+                className="bg-white p-2"
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+              >
+                {data.map((item, index) => (
+                  <Draggable
+                    key={item.key}
+                    draggableId={item.key}
+                    index={index}
                   >
-                    {item.icon}
-                    <span className="ml-2 text-[#191919]">{item.label}</span>
-                    {item.count && (
-                      <span className="ml-auto text-gray-500 group-hover:hidden">
-                        {item.count}
-                      </span>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{
+                          cursor: "pointer",
+                          ...provided.draggableProps.style,
+                        }}
+                      >
+                        <SidebarItem
+                          item={item}
+                          isActive={activeKey === item.key}
+                          onClick={() => handleItemClick(item.key, item.label)}
+                        />
+                      </div>
                     )}
-                    <span className="ml-auto hidden group-hover:block text-gray-400 hover:text-gray-700 text-sm">
-                      <DashOutlined />
-                    </span>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+
+        <Divider />
+        <div>
+          <Collapse
+            items={items}
+            bordered={false}
+            size="small"
+            className="bg-white text-left p-2 ml-2"
+            ghost
+          />
+        </div>
+
+        <Divider />
+        <div className="p-2">
+          {bottomIcons.map((item) => (
+            <SidebarItem
+              key={item.key}
+              item={item}
+              isActive={activeKey === item.key}
+              onClick={() => handleItemClick(item.key, item.label)}
+            />
+          ))}
+        </div>
+      </ConfigProvider>
+    </div>
   );
 };
 

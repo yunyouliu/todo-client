@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Input, Popover } from "antd";
 import Icon from "@/components/index/icon";
 import Priority from "@/components/task/common/priority";
-import Remind from '@/components/task/common/Remind'
+import Remind from "@/components/task/common/Remind";
+import dayjs from "dayjs"; // 日期处理库
+import isoWeek from "dayjs/plugin/isoWeek";
 const { TextArea } = Input;
 
 interface TextInputProps {
@@ -16,9 +18,9 @@ interface TextInputProps {
 
 interface IconProps {
   name: string;
-  IconName: string;
   size?: number;
   content: React.ReactNode;
+  renderNode: React.ReactNode; // 用于合并图标和文字
 }
 
 const TextInput: React.FC<TextInputProps> = ({
@@ -29,51 +31,150 @@ const TextInput: React.FC<TextInputProps> = ({
   onChange,
   onPriorityChange,
 }) => {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null); // 当前选中的日期
+
+  // 日期标签显示逻辑
+
+  // 引入插件，修改一周的起始日为周一
+  dayjs.extend(isoWeek);
+
+  const getDateLabel = () => {
+    if (!selectedDate) return null;
+
+    const today = dayjs();
+    const date = dayjs(selectedDate);
+
+    // 判断是否为今天
+    if (date.isSame(today, "day")) {
+      return { label: "今天", color: "blue" };
+    }
+
+    // 判断是否为过去的日期
+    if (date.isBefore(today, "day")) {
+      if (date.isSame(today.subtract(1, "day"), "day")) {
+        return { label: "昨天", color: "red" };
+      }
+      return {
+        label:
+          date.year() === today.year()
+            ? date.format("M/D")
+            : date.format("YYYY/M/D"),
+        color: "red",
+      };
+    }
+
+    // 判断是否为未来的日期
+    if (date.isSame(today.add(1, "day"), "day")) {
+      return { label: "明天", color: "blue" };
+    }
+
+    // 判断是否为周几（从周一开始）
+    const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    const weekStart = today.startOf("isoWeek"); // 获取当前周的起始时间（周一）
+    for (let i = 0; i < 7; i++) {
+      if (date.isSame(weekStart.add(i, "day"), "day")) {
+        return { label: weekDays[i], color: "blue" };
+      }
+    }
+
+    // 默认返回日期
+    return {
+      label:
+        date.year() === today.year()
+          ? date.format("M/D")
+          : date.format("YYYY/M/D"),
+      color: "blue",
+    };
+  };
+
+  const dateLabel = getDateLabel();
+
   const icons: IconProps[] = [
     {
       name: "日期设置",
-      IconName: "rili",
-      size: 20,
-      content: <Remind />,
+      size: 26,
+      content: (
+        <Remind
+          onSelect={(date: string) => setSelectedDate(date)} // 回调函数更新选中的日期
+        />
+      ),
+      renderNode: (
+        <div className="flex items-center ml-2 mb-1 hover:bg-slate-100 p-1">
+          <Icon
+            name={selectedDate ? `day${dayjs(selectedDate).date()}` : "rili"} // 动态设置日期图标
+            size={20}
+            className="cursor-pointer text-gray-300 rounded-lg "
+          />
+          {dateLabel && (
+            <span
+              className="ml-1 text-xs"
+              style={{ color: dateLabel.color || "black" }} // 控制文字颜色
+            >
+              {dateLabel.label}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       name: "优先级",
-      IconName:
-        selected === "高优先级"
-          ? "red"
-          : selected === "中优先级"
-            ? "yellow"
-            : selected === "低优先级"
-              ? "blue"
-              : "youxianji", // 动态替换图标
-      size: 20,
+      size: 25,
       content: <Priority selected={selected} setSelected={onPriorityChange} />,
+      renderNode: (
+        <div className="flex items-center">
+          <Icon
+            name={
+              selected === "高优先级"
+                ? "red"
+                : selected === "中优先级"
+                  ? "yellow"
+                  : selected === "低优先级"
+                    ? "blue"
+                    : "youxianji"
+            } // 动态替换图标
+            size={25}
+            className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
+          />
+        </div>
+      ),
     },
     {
       name: "移动到",
-      IconName: "yidongdao",
-      size: 20,
+      size: 25,
       content: "移动到",
+      renderNode: (
+        <Icon
+          name="yidongdao"
+          size={25}
+          className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
+        />
+      ),
     },
     {
       name: "标签",
-      IconName: "biaoqian",
-      size: 20,
+      size: 25,
       content: "添加标签",
+      renderNode: (
+        <Icon
+          name="biaoqian"
+          size={25}
+          className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
+        />
+      ),
     },
     {
       name: "更多",
-      IconName: "gengduo",
-      size: 20,
+      size: 25,
       content: "更多",
+      renderNode: (
+        <Icon
+          name="gengduo"
+          size={25}
+          className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
+        />
+      ),
     },
   ];
-
-  const handleIconClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    console.log("icon click");
-  };
 
   return (
     <div className={` ${className}`}>
@@ -86,7 +187,7 @@ const TextInput: React.FC<TextInputProps> = ({
         onChange={(e) => onChange(e.target.value)}
       />
       <div
-        className="flex -translate-y-8 items-center"
+        className="flex gap-4 -translate-y-8 items-center mt-23"
         onMouseDown={(e) => e.preventDefault()}
       >
         {icons.map((icon) => (
@@ -98,18 +199,13 @@ const TextInput: React.FC<TextInputProps> = ({
             key={icon.name}
             overlayInnerStyle={{ padding: 1 }}
           >
-            <Icon
-              name={icon.IconName}
-              size={26}
-              className="ml-3 cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
-              onClick={handleIconClick}
-            />
+            {icon.renderNode}
           </Popover>
         ))}
       </div>
       <Button
         size="small"
-        className="float-right mb-1 -translate-y-14 mr-3"
+        className="float-right  -translate-y-16 mr-3"
         type="primary"
         disabled={!value}
         onMouseDown={(e) => e.preventDefault()}
