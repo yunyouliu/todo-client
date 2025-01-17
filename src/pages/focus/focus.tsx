@@ -4,31 +4,24 @@
  * @Author: yunyouliu
  * @Date: 2024-12-23 11:42:26
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-16 09:30:53
+ * @LastEditTime: 2025-01-16 19:39:39
  */
 import React from "react";
 import Timer from "@/components/focus/Timer";
 import Overview from "@/components/focus/Overview";
 import Record from "@/components/focus/Record";
+import useMediaQuery from "@/hooks/useMediaQuery";
 import { Splitter, Typography } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 const Focus: React.FC = () => {
   const { Title, Text } = Typography;
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
   const [activeKey, setActiveKey] = React.useState<string>("tomorrow");
-  const mediaQuery = window.matchMedia("(min-width:499px)");
-  const [tabletQuery, setTabletQuery] = React.useState<boolean>(
-    mediaQuery.matches
-  );
-  console.log(tabletQuery);
-  React.useEffect(() => {
-    const listener = () => setTabletQuery(mediaQuery.matches);
-    mediaQuery.addEventListener("change", listener);
-    return () => mediaQuery.removeEventListener("change", listener);
-  }, []);
+  const isTablet = useMediaQuery("(min-width: 499px)");
+
   return (
     <div className="flex flex-row h-screen bg-white select-none">
-      {tabletQuery ? (
+      {isTablet ? (
         <Splitter className="w-full h-full">
           <Splitter.Panel defaultSize="40%" min="35%">
             <div className="">

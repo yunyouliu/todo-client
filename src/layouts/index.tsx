@@ -4,16 +4,16 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-16 10:34:38
+ * @LastEditTime: 2025-01-17 10:53:38
  */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../global.css";
 import "../assets/iconfont";
 import { Layout, theme, ConfigProvider, Drawer } from "antd";
 import Sidebar from "@/components/index/sideBar";
 import SideBar from "@/components/task/common/Sidebar";
-import Icon from "@/components/index/icon";
-import { Outlet } from "umi";
+import useMediaQuery from "@/hooks/useMediaQuery";
+import { useDispatch, useSelector, Outlet } from "umi";
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
@@ -89,22 +89,32 @@ const buttomIcons: SidebarItem[] = [
   { key: "2", icon: "fangqi", size: 20, label: "已放弃" },
   { key: "3", icon: "lajitong", size: 18, label: "垃圾桶" },
 ];
-
 const Layouts: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
-  const [open, setOpen] = React.useState(true);
-  const [activeKey, setActiveKey] = useState<string>("tomorrow");
-  const [activeLabel, setActiveLabel] = useState<string>("明天");
+  const dispatch = useDispatch();
+  const { activeKey, isopen } = useSelector((state: any) => state.active);
+  const isTablet = useMediaQuery("(min-width: 499px)");
+  useEffect(() => {
+    if (isopen && isTablet) {
+      dispatch({
+        type: "active/setIsOpen",
+        payload: !isTablet,
+      });
+    }
+  }, [isopen, isTablet]);
 
-  const handleItemClick = (
-    key: string,
-    lable: string,
-    setActiveKey: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    setActiveKey(key);
-    setActiveLabel(lable);
+  const handleItemClick = (key: string, lable: string) => {
+    dispatch({
+      type: "active/setActiveKey",
+      payload: key,
+    });
+    dispatch({
+      type: "active/setActiveLabel",
+      payload: lable,
+    });
+
     // navigate(`/task/${key}`);
     console.log(`Clicked on: ${key}`);
   };
@@ -161,23 +171,21 @@ const Layouts: React.FC = () => {
       }}
     >
       <div className="h-full">
-          <Drawer
-            placement="left"
-            width="76%"
-            onClose={() => setOpen(false)}
-            open={open}
-            closeIcon={null}
-          >
-            <SideBar
-              data={sidebarData}
-              bottomIcons={buttomIcons}
-              activeKey={activeKey}
-              onItemClick={(key, label) =>
-                handleItemClick(key, label, setActiveKey)
-              }
-              onDragEnd={(result) => console.log("Drag ended", result)}
-            />
-          </Drawer>
+        <Drawer
+          placement="left"
+          width="76%"
+          onClose={() => dispatch({ type: "active/toggleIsOpen" })}
+          open={isopen}
+          closeIcon={null}
+        >
+          <SideBar
+            data={sidebarData}
+            bottomIcons={buttomIcons}
+            activeKey={activeKey}
+            onItemClick={(key, label) => handleItemClick(key, label)}
+            onDragEnd={(result) => console.log("Drag ended", result)}
+          />
+        </Drawer>
         <Layout className="h-full">
           <Sider
             trigger={null}

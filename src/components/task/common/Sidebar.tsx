@@ -4,12 +4,13 @@
  * @Author: yunyouliu
  * @Date: 2024-12-29 11:34:13
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-16 10:38:20
+ * @LastEditTime: 2025-01-17 10:33:46
  */
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { Divider, Collapse, ConfigProvider } from "antd";
 import type { CollapseProps } from "antd";
 import SidebarItem from "./SidebarItem";
+import { useSelector, useDispatch } from "umi";
 
 // 👋 欢迎💼 工作任务📦 购物清单	📖学习安排🎂生日提醒🏃锻炼计划🦄心愿清单🏡个人备忘
 const list = [
@@ -55,6 +56,21 @@ const list = [
   },
 ];
 
+const tag = [
+  {
+    key: "10086",
+    label: "生日",
+    icon: "biaoqian",
+    color: "#35CB27",
+  },
+  {
+    key: "10087",
+    label: "生活",
+    icon: "biaoqian",
+    color: "rgb(241, 168, 58)",
+  },
+];
+
 // 定义侧边栏组件的属性接口
 interface SidebarProps {
   data: Array<{
@@ -62,6 +78,7 @@ interface SidebarProps {
     key: string;
     icon: string;
     label: string;
+    color?: string;
     count?: number;
   }>;
   bottomIcons: Array<{
@@ -69,6 +86,7 @@ interface SidebarProps {
     key: string;
     icon: string;
     label: string;
+    color?: string;
     count?: number;
   }>;
   activeKey: string;
@@ -77,15 +95,22 @@ interface SidebarProps {
 }
 
 // 实现一个可拖拽的侧边栏组件
-const Sidebar: React.FC<SidebarProps> = ({
-  data,
-  bottomIcons,
-  activeKey,
-  onItemClick,
-  onDragEnd,
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
+  const dispatch = useDispatch();
+  const { activeKey } = useSelector((state: any) => state.active);
   const handleItemClick = (key: string, label: string) => {
-    if (onItemClick) onItemClick(key, label);
+    dispatch({
+      type: "active/setActiveKey",
+      payload: key,
+    });
+    dispatch({
+      type: "active/setActiveLabel",
+      payload: label,
+    });
+    dispatch({
+      type: "active/setIsOpen",
+      payload: false,
+    });
   };
   // Collapse项配置
   const items: CollapseProps["items"] = [
@@ -125,7 +150,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       label: (
         <div className="hover:text-pink-300 text-sm text-gray-400">标签</div>
       ),
-      children: <></>,
+      children: (
+        <div>
+          {tag.map((item) => (
+            <SidebarItem
+              key={item.key}
+              item={item}
+              color={item.color}
+              isActive={activeKey === item.key}
+              onClick={() => handleItemClick(item.key, item.label)}
+            />
+          ))}
+        </div>
+      ),
     },
   ];
 
@@ -188,6 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <SidebarItem
               key={item.key}
               item={item}
+              color={item.color}
               isActive={activeKey === item.key}
               onClick={() => handleItemClick(item.key, item.label)}
             />

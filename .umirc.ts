@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-14 10:29:11
+ * @LastEditTime: 2025-01-16 20:35:48
  */
 import { defineConfig } from "umi";
 export default defineConfig({

@@ -4,14 +4,15 @@
  * @Author: yunyouliu
  * @Date: 2024-11-21 15:33:30
  * @LastEditors: yunyouliu
- * @LastEditTime: 2024-12-31 09:57:05
+ * @LastEditTime: 2025-01-17 10:58:53
  */
 
 import React, { useState } from "react";
-import { Avatar, Tooltip } from "antd";
+import { Avatar, Tooltip, Popover, Badge } from "antd";
 import { SyncOutlined } from "@ant-design/icons";
 import Icon from "@/components/index/icon"; // 自定义图标组件的路径
-import { useNavigate } from "umi";
+import { useNavigate, useDispatch, useSelector } from "umi";
+import MenuItem from "@/components/task/common/MenuItem";
 
 interface MenuItem {
   icon: string; // 图标名称
@@ -23,14 +24,9 @@ interface MenuItem {
 interface SidebarProps {
   menuItems: MenuItem[]; // 菜单配置项
   avatarSrc: string; // 头像链接
-  onAvatarClick?: () => void; // 头像点击事件
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  menuItems,
-  avatarSrc,
-  onAvatarClick,
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [Flag, setFlag] = useState<boolean>(false);
   const naviugate = useNavigate();
@@ -39,17 +35,66 @@ const Sidebar: React.FC<SidebarProps> = ({
     // 触发菜单项的点击事件
     naviugate(path);
   };
+  const handleAcatarClick = () => {
+    // 触发头像的点击事件
+    console.log("点击了头像");
+  };
 
   return (
     <div className="bg-white h-full shadow-md w-12 flex flex-col items-center pt-4">
       {/* 用户头像 */}
-      <Avatar
-        src={avatarSrc}
-        size={36}
-        shape="square"
-        className="mb-4 cursor-pointer"
-        onClick={onAvatarClick}
-      />
+      <Popover
+        placement="rightTop"
+        trigger="click"
+        arrow={false}
+        overlayInnerStyle={{ padding: 0 }}
+        content={
+          <div className="w-40 p-1 shadow-lg">
+            <MenuItem
+              icon="shezhi"
+              label="设置"
+              size={20}
+              onClick={() => {
+                console.log("点击了通知");
+              }}
+            />
+            <MenuItem
+              icon="tongji"
+              label="统计"
+              size={17}
+              onClick={() => {
+                console.log("点击了通知");
+              }}
+            />
+
+            <MenuItem
+              icon="vip"
+              label="高级会员"
+              size={18}
+              onClick={() => {
+                console.log("点击了通知");
+              }}
+            />
+            <MenuItem
+              icon="logout"
+              label="退出登陆"
+              size={20}
+              onClick={() => {
+                console.log("点击了通知");
+              }}
+            />
+          </div>
+        }
+      >
+        <Badge count={<Icon name="vip" />}>
+          <Avatar
+            src={avatarSrc}
+            size={36}
+            shape="square"
+            className="mb-4 cursor-pointer"
+          />
+        </Badge>
+      </Popover>
 
       {/* 菜单图标 */}
       <ul className="flex-1 flex flex-col items-center gap-4">
