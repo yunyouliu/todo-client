@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-12-23 11:42:26
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-16 19:39:39
+ * @LastEditTime: 2025-02-26 21:21:13
  */
 import React from "react";
 import Timer from "@/components/focus/Timer";
@@ -13,11 +13,12 @@ import Record from "@/components/focus/Record";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { Splitter, Typography } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { useSelector, useDispatch } from "umi";
 const Focus: React.FC = () => {
   const { Title, Text } = Typography;
-  const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
-  const [activeKey, setActiveKey] = React.useState<string>("tomorrow");
+  const isCollapsed = useSelector((state: any) => state.active.isCollapsed);
   const isTablet = useMediaQuery("(min-width: 499px)");
+  const dispatch = useDispatch();
 
   return (
     <div className="flex flex-row h-screen bg-white select-none">
@@ -49,12 +50,12 @@ const Focus: React.FC = () => {
               {isCollapsed ? (
                 <MenuUnfoldOutlined
                   className="text-xl cursor-pointer text-gray-500"
-                  onClick={() => setIsCollapsed(false)}
+                  onClick={() => dispatch({ type: "active/toggleIsOpen" })}
                 />
               ) : (
                 <MenuFoldOutlined
                   className="text-xl cursor-pointer text-gray-500"
-                  onClick={() => setIsCollapsed(true)}
+                  onClick={() => dispatch({ type: "active/toggleIsOpen" })}
                 />
               )}
               <Title level={4} className="align-middle mt-1 ml-2">

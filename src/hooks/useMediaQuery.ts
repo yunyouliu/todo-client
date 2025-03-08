@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 const useMediaQuery = (query: string): boolean => {
   const mediaQuery = window.matchMedia(query);

@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-16 20:35:48
+ * @LastEditTime: 2025-03-06 18:08:21
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -18,7 +18,14 @@ export default defineConfig({
     "@umijs/plugins/dist/antd",
     "@umijs/plugins/dist/dva",
   ],
-  proxy: {},
+  proxy: {
+    "/api": {
+      // 代理的前缀
+      target: "http://localhost:3000/api/", // 后端服务器地址
+      changeOrigin: true, // 是否跨域
+      pathRewrite: { "^/api": "" }, // 重写路径（可选）
+    },
+  },
   mfsu: {},
   alias: {
     "@": "./src",
@@ -40,11 +47,79 @@ export default defineConfig({
       routes: [
         {
           path: "/task/all/",
-          component: "@/pages/task/all.tsx",
+          component: "@/pages/task/all",
         },
         {
           path: "/task/all/:id",
-          component: "@/pages/task/all.tsx",
+          component: "@/pages/task/all",
+        },
+        {
+          path: "/task/assignedme/",
+          component: "@/pages/task/assignedme",
+        },
+        {
+          path: "/task/assignedme/:id",
+          component: "@/pages/task/assignedme",
+        },
+        {
+          path: "/task/today/",
+          component: "@/pages/task/today",
+        },
+        {
+          path: "/task/today/:id",
+          component: "@/pages/task/today",
+        },
+        {
+          path: "/task/tomorrow/",
+          component: "@/pages/task/tomorrow",
+        },
+        {
+          path: "/task/tomorrow/:id",
+          component: "@/pages/task/tomorrow",
+        },
+        {
+          path: "/task/abstract/",
+          component: "@/pages/task/abstract",
+        },
+        {
+          path: "/task/week/",
+          component: "@/pages/task/week",
+        },
+        {
+          path: "/task/week/:id",
+          component: "@/pages/task/week",
+        },
+        {
+          path: "/task/inbox/",
+          component: "@/pages/task/inbox",
+        },
+        {
+          path: "/task/inbox/:id",
+          component: "@/pages/task/inbox",
+        },
+        {
+          path: "/task/abandoned/",
+          component: "@/pages/task/abandoned",
+        },
+        {
+          path: "/task/abandoned/:id",
+          component: "@/pages/task/abandoned",
+        },
+        {
+          path: "/task/completed/",
+          component: "@/pages/task/completed",
+        },
+        {
+          path: "/task/completed/:id",
+          component: "@/pages/task/completed",
+        },
+        {
+          path: "/task/trash/",
+          component: "@/pages/task/trash",
+        },
+        {
+          path: "/task/trash/:id",
+          component: "@/pages/task/trash",
         },
       ],
     },
@@ -59,6 +134,10 @@ export default defineConfig({
     {
       path: "/focus",
       component: "@/pages/focus/focus",
+    },
+    {
+      path: "/habit",
+      component: "@/pages/habit/habit",
     },
   ],
 });

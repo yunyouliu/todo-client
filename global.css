@@ -86,3 +86,9 @@
 .custom-calendar .ant-picker-calendar-date-content::-webkit-scrollbar {
   @apply w-0 h-0;
 }
+
+.md-editor-toolbar-item svg {
+  width: 26px !important;  /* 调大宽度 */
+  height: 26px !important; /* 调大高度 */
+}
+

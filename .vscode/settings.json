@@ -1,2 +1,4 @@
 {
+    "references.preferredLocation": "view",
+    "editor.indentSize": "tabSize"
 }

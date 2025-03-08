@@ -6,25 +6,99 @@ import {
   Typography,
   Space,
   Checkbox,
-  Popover,
+  message,
 } from "antd";
 import {
   WechatOutlined,
   AppleFilled,
-  WechatWorkOutlined,
   GithubOutlined,
   WeiboCircleFilled,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { useNavigate } from "umi";
+import { userApi } from "@/api";
 
-const { Title, Link, Text } = Typography;
+const { Title, Text } = Typography;
 
 const Index = () => {
-  const [formType, setFormType] = useState("login"); // 表单类型：login, register, forgetPassword
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("123456");
+  const [formType, setFormType] = useState<
+    "login" | "register" | "forgetPassword"
+  >("login");
+  const [loading, setLoading] = useState(false);
+  const [agree, setAgree] = useState(false);
   const navigate = useNavigate();
+  // 在组件顶部添加手机号验证正则
+  const PHONE_REGEXP = /^1[3-9]\d{9}$/;
+
+  // 修改注册部分的表单验证规则
+  const accountRules = [
+    { required: true, message: "请输入手机号或邮箱" },
+    ({ getFieldValue }: any) => ({
+      validator(_: any, value: string) {
+        if (
+          !value ||
+          PHONE_REGEXP.test(value) ||
+          /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/.test(value)
+        ) {
+          return Promise.resolve();
+        }
+        return Promise.reject(new Error("请输入有效的手机号或邮箱"));
+      },
+    }),
+  ];
+
+  const passwordRules = [
+    { required: true, message: "请输入密码" },
+    { min: 6, message: "密码至少6位" },
+    { max: 64, message: "密码最多64位" },
+  ];
+
+  // 统一表单提交处理
+  const handleSubmit = async (values: any) => {
+    setLoading(true);
+    try {
+      switch (formType) {
+        case "login":
+          const loginRes = await userApi.login({
+            username: values.username,
+            password: values.password,
+          });
+          localStorage.setItem("token", loginRes.token);
+          message.success("登录成功");
+          navigate("/task");
+          break;
+
+        case "register":
+          const params = {
+            username: values.username,
+            password: values.password,
+          };
+          if (!agree) {
+            message.error("请同意使用条款和隐私政策");
+            return;
+          }
+          await userApi.register(params);
+          message.success("注册成功，请登录");
+          setFormType("login");
+
+          break;
+
+        case "forgetPassword":
+          await userApi.resetPassword(values.email);
+          message.success("重置密码邮件已发送，请检查邮箱");
+          break;
+      }
+    } catch (error: any) {
+      message.error(error?.response?.data?.message || "操作失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 第三方登录处理
+  const handleSocialLogin = (provider: string) => {
+    window.location.href = `http://localhost:3000/api/users/auth/${provider}`;
+  };
   // 切换表单类型的公共函数
   const toggleFormType = useCallback(
     (type: "login" | "register") => {
@@ -36,7 +110,9 @@ const Index = () => {
   );
 
   // 只在 formType 发生变化时更新 formType
-  const handleFormTypeChange = (type: string) => {
+  const handleFormTypeChange = (
+    type: "login" | "register" | "forgetPassword"
+  ) => {
     if (formType !== type) {
       setFormType(type);
     }
@@ -47,14 +123,6 @@ const Index = () => {
     () => (formType === "login" ? "注册" : "登录"),
     [formType]
   );
-
-  const login = (username: string, password: string) => {
-    if (username === "admin" && password === "123456") {
-      navigate("/task");
-    } else {
-      alert("登录失败");
-    }
-  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -109,32 +177,35 @@ const Index = () => {
         </Title>
         <Form
           layout="vertical"
-          onFinish={(values) => console.log(`${formType}成功：`, values)}
+          onFinish={handleSubmit}
           className="mt-6"
+          initialValues={{ remember: true }}
         >
           {formType === "login" && (
             <>
               <Form.Item
                 name="username"
-                initialValue={username}
-                rules={[{ required: true, message: "请输入手机号或邮箱" }]}
+                rules={accountRules}
+                validateTrigger="onBlur"
               >
-                <Input placeholder="手机号/邮箱" />
+                <Input placeholder="手机号/邮箱" allowClear />
               </Form.Item>
+
               <Form.Item
                 name="password"
-                initialValue={password}
-                rules={[{ required: true, message: "请输入密码" }]}
+                rules={passwordRules}
+                validateTrigger="onBlur"
               >
-                <Input.Password placeholder="密码" />
+                <Input.Password placeholder="密码" allowClear />
               </Form.Item>
+
               <Form.Item>
                 <Button
                   type="primary"
                   htmlType="submit"
                   block
+                  loading={loading}
                   className="h-9"
-                  onClick={() => login(username, password)}
                 >
                   登录
                 </Button>
@@ -145,19 +216,29 @@ const Index = () => {
           {formType === "register" && (
             <>
               <Form.Item
-                name="email"
-                rules={[{ required: true, message: "请输入邮箱" }]}
+                name="username"
+                rules={accountRules}
+                validateTrigger="onBlur"
               >
-                <Input placeholder="手机号/邮箱" />
+                <Input placeholder="手机号/邮箱" allowClear />
               </Form.Item>
+
               <Form.Item
                 name="password"
-                rules={[{ required: true, message: "请输入密码" }]}
+                rules={passwordRules}
+                validateTrigger="onBlur"
               >
-                <Input.Password placeholder="密码：6-64字符" />
+                <Input.Password placeholder="密码：6-64字符" allowClear />
               </Form.Item>
+
               <Form.Item>
-                <Button type="primary" htmlType="submit" block className="h-9">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  loading={loading}
+                  className="h-9"
+                >
                   注册
                 </Button>
               </Form.Item>
@@ -202,7 +283,7 @@ const Index = () => {
             ) : (
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-[12px] space-x-2">
-                  <Checkbox />
+                  <Checkbox checked={agree} onChange={() => setAgree(!agree)} />
                   <span className="text-[13px] text-gray-400">
                     同意
                     <a
@@ -230,39 +311,35 @@ const Index = () => {
         )}
 
         {formType !== "forgetPassword" && (
-          <Space direction="vertical" size="middle" className="w-full mt-2">
-            <Button
-              icon={<WechatOutlined style={{ fontSize: "20px" }} />}
-              style={{ backgroundColor: "#52c41a", color: "#fff" }}
-              className="h-9"
-              block
-            >
-              微信
-            </Button>
-            <div className="text-center">
-              <Popover
-                content={
-                  <div className="space-x-3">
-                    <AppleFilled
-                      twoToneColor="#eb2f96"
-                      style={{ fontSize: "20px" }}
-                    />
-                    <WeiboCircleFilled style={{ fontSize: "20px" }} />
-                    <GithubOutlined style={{ fontSize: "20px" }} />
-                  </div>
-                }
-                placement="bottom"
-              >
-                <Text
-                  type="secondary"
-                  style={{ fontSize: "12px" }}
-                  className="cursor-pointer"
-                >
-                  更多登录方式
-                </Text>
-              </Popover>
+          <div className="mt-6">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  其他登录方式
+                </span>
+              </div>
             </div>
-          </Space>
+
+            <Space className="w-full justify-center">
+              <Button
+                icon={<WechatOutlined style={{ fontSize: 20 }} />}
+                shape="circle"
+              />
+              <Button
+                icon={<GithubOutlined style={{ fontSize: 20 }} />}
+                shape="circle"
+                onClick={() => handleSocialLogin("github")}
+              />
+              <Button
+                icon={<WeiboCircleFilled style={{ fontSize: 20 }} />}
+                shape="circle"
+                onClick={() => handleSocialLogin("google")}
+              />
+            </Space>
+          </div>
         )}
       </div>
 

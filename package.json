@@ -10,12 +10,17 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.1",
+    "@milkdown/crepe": "^7.6.3",
+    "@milkdown/kit": "^7.6.3",
+    "@milkdown/react": "^7.6.3",
     "@types/gsap": "^3.0.0",
     "antd": "^5.22.1",
+    "axios": "^1.8.1",
     "dayjs": "^1.11.13",
     "gsap": "^3.12.5",
     "react-beautiful-dnd": "^13.1.1",
-    "umi": "^4.3.32"
+    "umi": "^4.3.32",
+    "vditor": "^3.10.9"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

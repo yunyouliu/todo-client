@@ -4,19 +4,20 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-17 10:53:38
+ * @LastEditTime: 2025-02-26 21:28:17
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "../../global.css";
 import "../assets/iconfont";
 import { Layout, theme, ConfigProvider, Drawer } from "antd";
 import Sidebar from "@/components/index/sideBar";
-import SideBar from "@/components/task/common/Sidebar";
 import useMediaQuery from "@/hooks/useMediaQuery";
-import { useDispatch, useSelector, Outlet } from "umi";
+import { useDispatch, useSelector, Outlet, useLocation } from "umi";
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
+import DrawerContent from "@/components/index/DrawerContent";
+import { SidebarItem } from "@/models/sidebar";
 dayjs.locale("zh-cn");
 
 const { Sider, Content } = Layout;
@@ -28,93 +29,45 @@ interface MenuItem {
   label: string;
   path: string;
 }
-interface SidebarItem {
-  key: string;
-  icon: string;
-  size: number;
-  label: string;
-  count?: number;
-}
 
-const sidebarData: SidebarItem[] = [
-  {
-    key: "all",
-    size: 18,
-    icon: "suoyou",
-    label: "所有",
-    count: 11,
-  },
-  {
-    key: "today",
-    icon: `day${new Date().getDate()}`, // 动态生成图标名称
-    label: "今天",
-    size: 18,
-    count: 1,
-  },
-  {
-    key: "tomorrow",
-    icon: "mingtian",
-    label: "明天",
-    size: 18,
-  },
-  {
-    key: "week",
-    icon: `icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`, // 动态生成图标名称
-    label: "最近7天",
-    size: 22,
-    count: 1,
-  },
-  {
-    key: "assigned",
-    icon: "zhipai",
-    label: "指派给我",
-    size: 18,
-  },
-  {
-    key: "inbox",
-    icon: "shoujixiang",
-    label: "收集箱",
-    size: 18,
-  },
-  {
-    key: "summary",
-    icon: "zhaiyao",
-    label: "摘要",
-    size: 18,
-  },
-];
-
-const buttomIcons: SidebarItem[] = [
-  { key: "1", icon: "renwu", size: 18, label: "已完成" },
-  { key: "2", icon: "fangqi", size: 20, label: "已放弃" },
-  { key: "3", icon: "lajitong", size: 18, label: "垃圾桶" },
-];
 const Layouts: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const dispatch = useDispatch();
+  const location = useLocation();
   const { activeKey, isopen } = useSelector((state: any) => state.active);
+  const { sidebarData, drawerButtomIcons,buttomIcons } = useSelector(
+    (state: {
+      sidebar: { sidebarData: SidebarItem[]; drawerButtomIcons: SidebarItem[],buttomIcons: SidebarItem[] };
+    }) => state.sidebar
+  );
   const isTablet = useMediaQuery("(min-width: 499px)");
+
   useEffect(() => {
-    if (isopen && isTablet) {
+    if (isTablet && isopen) {
       dispatch({
         type: "active/setIsOpen",
-        payload: !isTablet,
+        payload: false, // 在桌面端自动关闭抽屉
       });
     }
-  }, [isopen, isTablet]);
+  }, [isTablet, isopen, dispatch]);
 
-  const handleItemClick = (key: string, lable: string) => {
-    dispatch({
-      type: "active/setActiveKey",
-      payload: key,
-    });
+
+  useEffect(() => {
+    // 直接用 pathname 匹配 sidebarData 和 buttomIcons
+    const activeItem = [...sidebarData, ...buttomIcons].find(item =>
+      location.pathname.startsWith(item.key)
+    );
     dispatch({
       type: "active/setActiveLabel",
-      payload: lable,
+      payload: activeItem?.label || "",
     });
+    console.log("activeItem", activeItem?.label);
+  }, [location.pathname, sidebarData, buttomIcons]);
 
+
+  const handleItemClick = (key: string, lable: string) => {
     // navigate(`/task/${key}`);
     console.log(`Clicked on: ${key}`);
   };
@@ -178,9 +131,10 @@ const Layouts: React.FC = () => {
           open={isopen}
           closeIcon={null}
         >
-          <SideBar
-            data={sidebarData}
-            bottomIcons={buttomIcons}
+          <DrawerContent
+            avatarSrc={avatarSrc}
+            sidebarData={sidebarData}
+            buttomIcons={drawerButtomIcons}
             activeKey={activeKey}
             onItemClick={(key, label) => handleItemClick(key, label)}
             onDragEnd={(result) => console.log("Drag ended", result)}

@@ -24,8 +24,8 @@ export interface ActiveModelType {
     setIsCollapsed: Reducer<ActiveState, AnyAction>; // 设置是否折叠
     setActiveLabel: Reducer<ActiveState, AnyAction>; // 设置激活的标签
     toggleIsCollapsed: Reducer<ActiveState, AnyAction>; // 切换折叠状态
-    toggleIsOpen:Reducer<ActiveState,AnyAction>
-    setIsOpen:Reducer<ActiveState,AnyAction>
+    toggleIsOpen: Reducer<ActiveState, AnyAction>;
+    setIsOpen: Reducer<ActiveState, AnyAction>;
   };
 }
 
@@ -33,10 +33,10 @@ const ActiveModel: ActiveModelType = {
   namespace: "active",
 
   state: {
-    activeKey: "tommorow",
+    activeKey: "all",
     isCollapsed: false,
-    isopen:true,
-    activeLabel: "明天",
+    isopen: false,
+    activeLabel: "所有",
   },
 
   reducers: {

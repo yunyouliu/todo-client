@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Input, Popover } from "antd";
 import Icon from "@/components/index/icon";
 import Priority from "@/components/task/common/priority";
@@ -168,7 +168,7 @@ const TextInput: React.FC<TextInputProps> = ({
       content: "更多",
       renderNode: (
         <Icon
-          name="gengduo"
+          name="more "
           size={25}
           className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
         />
@@ -176,18 +176,29 @@ const TextInput: React.FC<TextInputProps> = ({
     },
   ];
 
+  // 监听文本输入内容，动态计算行数
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    onChange(newText);
+
+    // 计算文本行数 66一行
+    const lineCount = Math.ceil(newText.length / 66);
+    setRows(lineCount + 1.5 < 2.5 ? 2.5 : lineCount + 1.5);
+  };
+  const [rows, setRows] = useState(2.5);
   return (
-    <div className={` ${className}`}>
+    <div className={`${className} relative`}>
       <TextArea
         autoFocus
         placeholder="准备做什么？"
-        autoSize={{ minRows: 2.5, maxRows: 6 }}
+        autoSize={{ minRows: rows, maxRows: 6 }}
         value={value}
         onBlur={onBlur}
-        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        onChange={handleTextChange}
       />
       <div
-        className="flex gap-4 -translate-y-8 items-center mt-23"
+        className="flex gap-4 items-center absolute bottom-0.5 left-0.5"
         onMouseDown={(e) => e.preventDefault()}
       >
         {icons.map((icon) => (
@@ -205,12 +216,13 @@ const TextInput: React.FC<TextInputProps> = ({
       </div>
       <Button
         size="small"
-        className="float-right  -translate-y-16 mr-3"
+        // className="float-right mr-3"
+        className="absolute bottom-2 right-2"
         type="primary"
         disabled={!value}
         onMouseDown={(e) => e.preventDefault()}
       >
-        添加
+        添加  
       </Button>
     </div>
   );

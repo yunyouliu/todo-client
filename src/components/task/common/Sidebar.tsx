@@ -4,13 +4,15 @@
  * @Author: yunyouliu
  * @Date: 2024-12-29 11:34:13
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-17 10:33:46
+ * @LastEditTime: 2025-02-25 20:37:33
  */
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { Divider, Collapse, ConfigProvider } from "antd";
+import { Divider, Collapse, ConfigProvider, Modal } from "antd";
 import type { CollapseProps } from "antd";
 import SidebarItem from "./SidebarItem";
-import { useSelector, useDispatch } from "umi";
+import { useSelector, useDispatch, useNavigate } from "umi";
+import Icon from "@/components/index/icon";
+import { useState } from "react";
 
 // 👋 欢迎💼 工作任务📦 购物清单	📖学习安排🎂生日提醒🏃锻炼计划🦄心愿清单🏡个人备忘
 const list = [
@@ -97,7 +99,9 @@ interface SidebarProps {
 // 实现一个可拖拽的侧边栏组件
 const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { activeKey } = useSelector((state: any) => state.active);
+  const [open, setOpen] = useState(false);
   const handleItemClick = (key: string, label: string) => {
     dispatch({
       type: "active/setActiveKey",
@@ -111,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
       type: "active/setIsOpen",
       payload: false,
     });
+    navigate(`${key}`);
   };
   // Collapse项配置
   const items: CollapseProps["items"] = [
@@ -122,7 +127,15 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
           <span className="bg-gray-200 ml-2 text-xs p-0.5 rounded-lg">
             已使用8/9
           </span>
-          <div className="hidden group-hover:block align-top float-right"></div>
+          <div className="hidden group-hover:block align-middle float-right mr-2 items-center ">
+            <Icon
+              name="add"
+              size={15}
+              onClick={(e) => {
+                e.stopPropagation(), setOpen(true);
+              }}
+            />
+          </div>
         </div>
       ),
       children: (
@@ -131,7 +144,6 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
             <SidebarItem
               key={item.key}
               item={item}
-              isActive={activeKey === item.key}
               onClick={() => handleItemClick(item.key, item.label)}
             />
           ))}
@@ -148,7 +160,13 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
     {
       key: "3",
       label: (
-        <div className="hover:text-pink-300 text-sm text-gray-400">标签</div>
+        <div className="text-sm text-gray-400 group flex items-center">
+          <div className="hover:text-pink-300 text-sm text-gray-400">标签</div>
+          <div className="hidden group-hover:flex ml-auto gap-3 mr-2 text-pink-200">
+            <Icon name="more" size={15} />
+            <Icon name="add" size={15} />
+          </div>
+        </div>
       ),
       children: (
         <div>
@@ -157,7 +175,6 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
               key={item.key}
               item={item}
               color={item.color}
-              isActive={activeKey === item.key}
               onClick={() => handleItemClick(item.key, item.label)}
             />
           ))}
@@ -168,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
 
   return (
     <div className="select-none scroll-smooth">
-      <ConfigProvider theme={{ token: { paddingSM: 0 } }}>
+      <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
         <DragDropContext onDragEnd={onDragEnd || (() => {})}>
           <Droppable droppableId="sidebar">
             {(provided) => (
@@ -195,7 +212,6 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
                       >
                         <SidebarItem
                           item={item}
-                          isActive={activeKey === item.key}
                           onClick={() => handleItemClick(item.key, item.label)}
                         />
                       </div>
@@ -226,11 +242,26 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
               key={item.key}
               item={item}
               color={item.color}
-              isActive={activeKey === item.key}
               onClick={() => handleItemClick(item.key, item.label)}
             />
           ))}
         </div>
+        <Modal
+          width="48%"
+          title="新建清单"
+          open={open}
+          onCancel={() => {
+            setOpen(false);
+          }}
+          style={{ top: "20%", padding: "0px" }}
+          mask={false}
+          footer={null}
+        >
+          <div className="flex ">
+            <div className="bg-white w-1/2">111</div>
+            <div className="bg-blue-300 w-1/2">111</div>
+          </div>
+        </Modal>
       </ConfigProvider>
     </div>
   );

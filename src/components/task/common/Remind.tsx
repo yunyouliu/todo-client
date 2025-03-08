@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-01-07 20:04:27
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-01-14 11:24:02
+ * @LastEditTime: 2025-02-25 16:17:11
  */
 import React, { useState } from "react";
 import { Segmented, Tooltip } from "antd";
@@ -52,7 +52,7 @@ const bottomIcon = [
   },
   {
     name: "重复",
-    IconName: "zhongfu",
+    IconName: "repeat",
   },
 ];
 
