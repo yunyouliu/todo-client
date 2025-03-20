@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-21 15:33:30
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-26 22:15:59
+ * @LastEditTime: 2025-03-20 23:24:55
  */
 
 import React, { useState } from "react";
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
             />
 
             <MenuItem
-              icon="vip"
+              icon="vip1"
               label="高级会员"
               size={18}
               onClick={() => {
@@ -85,7 +85,10 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
           </div>
         }
       >
-        <Badge count={<Icon name="vip" />}>
+        <Badge
+          count={<Icon name="norma" size={13} className="z-20" />}
+          offset={[-5, -5]}
+        >
           <Avatar
             src={avatarSrc}
             size={36}
@@ -104,6 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
             key={index}
             trigger={["hover"]}
             arrow={false}
+            mouseEnterDelay={0.3}
           >
             <li
               key={index}

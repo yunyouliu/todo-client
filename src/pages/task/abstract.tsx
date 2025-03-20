@@ -4,11 +4,12 @@
  * @Author: yunyouliu
  * @Date: 2025-02-21 16:01:56
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-28 18:58:34
+ * @LastEditTime: 2025-03-10 18:26:45
  */
 import React, { useEffect, useState } from "react";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
+import { Select } from "antd";
 
 const Abstract: React.FC = () => {
   const [vd, setVd] = useState<Vditor>();
@@ -20,8 +21,8 @@ const Abstract: React.FC = () => {
           `);
         setVd(vditor);
       },
-      height: "600px",
-      width: "90%",
+      minHeight: 600,
+      width: "100%",
     });
     // Clear the effect
     return () => {
@@ -30,8 +31,13 @@ const Abstract: React.FC = () => {
     };
   }, []);
   return (
-    <div className="flex h-full w-full p-6">
-      <div id="vditor" className="vditor text-left flex"></div>
+    <div className="flex flex-col h-full w-full p-3">
+      <div className="flex -mt-4 justify-start gap-4 text-xs">
+        <Select defaultValue="上月" size="small" className="text-xs" />
+        <Select defaultValue="上月" size="small" />
+        <Select defaultValue="上月" size="small" />
+      </div>
+      <div id="vditor" className="vditor text-left  mt-2 p-0" />
     </div>
   );
 };

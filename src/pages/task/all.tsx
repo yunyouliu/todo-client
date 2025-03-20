@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-01-04 20:02:11
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-21 16:06:40
+ * @LastEditTime: 2025-03-12 18:40:27
  */
 import React, { useState } from "react";
 import TextInput from "@/components/task/input/TextInput";
@@ -25,7 +25,7 @@ const All: React.FC = () => {
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [textValue, setTextValue] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState<string | null>(
-    "无优先级"
+    "none"
   );
   const text = `
   A dog is a type of domesticated animal.
@@ -38,6 +38,7 @@ const All: React.FC = () => {
       children: (
         <div>
           <TaskItem
+            id="1"
             title="📊 看板、时间线视图：可视化管理"
             date="2024/12/30"
             tags={["生日", "生活"]}
@@ -49,11 +50,13 @@ const All: React.FC = () => {
             hasRepeat={true}
           />
           <TaskItem
+            id="2"
             title="📝 购物清单"
             priority="medium"
             date="2025/1/7"
             tags={["生活"]}
           />
+          <TaskItem id="3" priority="medium" date="2025/1/7" tags={["生活"]} />
         </div>
       ),
       extra: <span className="text-blue-500 text-xs cursor-pointer">顺延</span>,
@@ -92,16 +95,15 @@ const All: React.FC = () => {
     console.log(textValue);
   };
 
-  const handlePriorityChange = (newPriority: string) => {
+  const handlePriorityChange = (newPriority: string, lable: string) => {
     setSelectedPriority(newPriority);
-    // if (newPriority === "无优先级") return;
     setTextValue((prevText) => {
       const priorityRegex = /\[.*?\]/;
       const existingPriorityMatch = prevText.match(priorityRegex);
       if (existingPriorityMatch) {
-        return prevText.replace(existingPriorityMatch[0], `[${newPriority}]`);
+        return prevText.replace(existingPriorityMatch[0], `[${lable}]`);
       } else {
-        return `${prevText}[${newPriority}]`;
+        return `${prevText}[${lable}]`;
       }
     });
   };

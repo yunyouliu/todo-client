@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-06 18:08:21
+ * @LastEditTime: 2025-03-17 00:02:54
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -46,12 +46,9 @@ export default defineConfig({
       component: "@/pages/task/task",
       routes: [
         {
-          path: "/task/all/",
+          path: "/task/all/*",
           component: "@/pages/task/all",
-        },
-        {
-          path: "/task/all/:id",
-          component: "@/pages/task/all",
+          exart:false
         },
         {
           path: "/task/assignedme/",

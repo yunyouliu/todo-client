@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Splitter } from "antd";
+import { Splitter, Tooltip } from "antd";
 import Sidebar from "@/components/task/common/Sidebar";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import {
@@ -11,6 +11,8 @@ import {
 } from "umi";
 import { SidebarItem } from "@/models/sidebar";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import Detail from "@/pages/task/detail";
+import Icon from "@/components/index/icon";
 
 const Task: React.FC = () => {
   const dispatch = useDispatch();
@@ -61,7 +63,7 @@ const Task: React.FC = () => {
             />
           </Splitter.Panel>
 
-          <Splitter.Panel min="28%" defaultSize="40%" className="flex-grow">
+          <Splitter.Panel min="28%" defaultSize="50%" className="flex-grow">
             {/* activeLabel存在且不为空显示 */}
             <div
               className={`${activeLabel ? "flex" : "hidden"} items-center p-3`}
@@ -78,13 +80,37 @@ const Task: React.FC = () => {
                 />
               )}
               <h2 className="ml-2 text-lg font-semibold mt-2">{activeLabel}</h2>
+              <div className="ml-auto gap-2 flex ">
+                <Tooltip title="排序" placement="bottom" arrow={false}>
+                  <>
+                    <Icon
+                      name="paixu"
+                      size={28}
+                      className=" hover:bg-gray-100 p-1.5 rounded-md"
+                    />
+                  </>
+                </Tooltip>
+                <Tooltip title="更多" placement="bottom" arrow={false}>
+                  <>
+                    <Icon
+                      name="more"
+                      size={28}
+                      className=" hover:bg-gray-100 p-1.5 rounded-md"
+                    />
+                  </>
+                </Tooltip>
+              </div>
             </div>
 
             <div className="">
               <Outlet />
             </div>
           </Splitter.Panel>
-          {showThirdPanel && <Splitter.Panel min="20%">{1}</Splitter.Panel>}
+          {showThirdPanel && (
+            <Splitter.Panel min="20%">
+              <Detail />
+            </Splitter.Panel>
+          )}
         </Splitter>
       ) : (
         <div>
@@ -105,7 +131,7 @@ const Task: React.FC = () => {
             <h2 className="ml-2 text-lg font-semibold mt-2">{activeLabel}</h2>
           </div>
 
-          <div className="">
+          <div className="flex">
             <Outlet />
           </div>
         </div>

@@ -13,6 +13,8 @@ import {
   AppleFilled,
   GithubOutlined,
   WeiboCircleFilled,
+  GoogleCircleFilled,
+  GoogleOutlined,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { useNavigate } from "umi";
@@ -97,6 +99,7 @@ const Index = () => {
 
   // 第三方登录处理
   const handleSocialLogin = (provider: string) => {
+    message.info(`正在前往${provider}...`);
     window.location.href = `http://localhost:3000/api/users/auth/${provider}`;
   };
   // 切换表单类型的公共函数
@@ -129,7 +132,7 @@ const Index = () => {
       {/* Logo and Register Link */}
       <div className="absolute top-8 left-8 flex items-center space-x-2">
         <Title
-          level={3}
+          level={4}
           style={{ color: "#1677ff" }}
           className="tablet:text-sm text-base"
         >
@@ -186,7 +189,6 @@ const Index = () => {
               <Form.Item
                 name="username"
                 rules={accountRules}
-                validateTrigger="onBlur"
               >
                 <Input placeholder="手机号/邮箱" allowClear />
               </Form.Item>
@@ -194,7 +196,6 @@ const Index = () => {
               <Form.Item
                 name="password"
                 rules={passwordRules}
-                validateTrigger="onBlur"
               >
                 <Input.Password placeholder="密码" allowClear />
               </Form.Item>
@@ -218,7 +219,6 @@ const Index = () => {
               <Form.Item
                 name="username"
                 rules={accountRules}
-                validateTrigger="onBlur"
               >
                 <Input placeholder="手机号/邮箱" allowClear />
               </Form.Item>
@@ -226,7 +226,6 @@ const Index = () => {
               <Form.Item
                 name="password"
                 rules={passwordRules}
-                validateTrigger="onBlur"
               >
                 <Input.Password placeholder="密码：6-64字符" allowClear />
               </Form.Item>
@@ -334,7 +333,7 @@ const Index = () => {
                 onClick={() => handleSocialLogin("github")}
               />
               <Button
-                icon={<WeiboCircleFilled style={{ fontSize: 20 }} />}
+                icon={<GoogleOutlined style={{ fontSize: 20 }} />}
                 shape="circle"
                 onClick={() => handleSocialLogin("google")}
               />

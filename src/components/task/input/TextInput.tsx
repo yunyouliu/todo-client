@@ -4,7 +4,7 @@ import Icon from "@/components/index/icon";
 import Priority from "@/components/task/common/priority";
 import Remind from "@/components/task/common/Remind";
 import dayjs from "dayjs"; // 日期处理库
-import isoWeek from "dayjs/plugin/isoWeek";
+import{getDateLabel} from "@/utils/getDateLabel";
 const { TextArea } = Input;
 
 interface TextInputProps {
@@ -13,7 +13,7 @@ interface TextInputProps {
   value: string;
   selected: string | null;
   onChange: (newValue: string) => void;
-  onPriorityChange: (newPriority: string) => void;
+  onPriorityChange: (newPriority: string,lable:string) => void;
 }
 
 interface IconProps {
@@ -24,70 +24,17 @@ interface IconProps {
 }
 
 const TextInput: React.FC<TextInputProps> = ({
-  className,
-  value,
-  selected,
-  onBlur,
-  onChange,
-  onPriorityChange,
+  className, // 自定义类名
+  value, // 输入框内容
+  selected, // 优先级
+  onBlur, // 失去焦点事件处理函数
+  onChange, // 输入框内容变化事件处理函数
+  onPriorityChange, // 优先级变化事件处理函数
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null); // 当前选中的日期
 
-  // 日期标签显示逻辑
 
-  // 引入插件，修改一周的起始日为周一
-  dayjs.extend(isoWeek);
-
-  const getDateLabel = () => {
-    if (!selectedDate) return null;
-
-    const today = dayjs();
-    const date = dayjs(selectedDate);
-
-    // 判断是否为今天
-    if (date.isSame(today, "day")) {
-      return { label: "今天", color: "blue" };
-    }
-
-    // 判断是否为过去的日期
-    if (date.isBefore(today, "day")) {
-      if (date.isSame(today.subtract(1, "day"), "day")) {
-        return { label: "昨天", color: "red" };
-      }
-      return {
-        label:
-          date.year() === today.year()
-            ? date.format("M/D")
-            : date.format("YYYY/M/D"),
-        color: "red",
-      };
-    }
-
-    // 判断是否为未来的日期
-    if (date.isSame(today.add(1, "day"), "day")) {
-      return { label: "明天", color: "blue" };
-    }
-
-    // 判断是否为周几（从周一开始）
-    const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-    const weekStart = today.startOf("isoWeek"); // 获取当前周的起始时间（周一）
-    for (let i = 0; i < 7; i++) {
-      if (date.isSame(weekStart.add(i, "day"), "day")) {
-        return { label: weekDays[i], color: "blue" };
-      }
-    }
-
-    // 默认返回日期
-    return {
-      label:
-        date.year() === today.year()
-          ? date.format("M/D")
-          : date.format("YYYY/M/D"),
-      color: "blue",
-    };
-  };
-
-  const dateLabel = getDateLabel();
+  const dateLabel = getDateLabel(selectedDate);
 
   const icons: IconProps[] = [
     {
@@ -119,7 +66,7 @@ const TextInput: React.FC<TextInputProps> = ({
     {
       name: "优先级",
       size: 25,
-      content: <Priority selected={selected} setSelected={onPriorityChange} />,
+      content: <Priority selected={selected} setSelected={onPriorityChange}/>,
       renderNode: (
         <div className="flex items-center">
           <Icon
@@ -130,7 +77,7 @@ const TextInput: React.FC<TextInputProps> = ({
                   ? "yellow"
                   : selected === "低优先级"
                     ? "blue"
-                    : "youxianji"
+                    : "none"
             } // 动态替换图标
             size={25}
             className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"

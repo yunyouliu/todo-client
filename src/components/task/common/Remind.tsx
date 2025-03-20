@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-01-07 20:04:27
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-25 16:17:11
+ * @LastEditTime: 2025-03-08 13:34:48
  */
 import React, { useState } from "react";
 import { Segmented, Tooltip } from "antd";
@@ -73,7 +73,7 @@ const Remind: React.FC<{ onSelect: (date: string) => void }> = ({
   };
 
   return (
-    <div className="w-72 p-2">
+    <div className="w-72 p-2 bg-white rounded-lg shadow-lg">
       <div className="text-center w-56 m-auto">
         <Segmented<string>
           defaultValue="日期"

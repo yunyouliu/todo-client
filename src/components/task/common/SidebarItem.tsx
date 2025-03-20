@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-01-15 16:26:19
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-26 22:00:35
+ * @LastEditTime: 2025-03-20 23:42:50
  */
 import React from "react";
 import Icon from "@/components/index/icon";
@@ -29,7 +29,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 }) => {
   const location = useLocation();
 
-  const isActive = location.pathname === item.key;
+  const isActive = location.pathname.match(item.key);
   return (
     <div
       className={`flex items-center p-2.5 text-sm cursor-pointer group  focus:outline-none  hover:bg-gray-100 rounded-lg ${

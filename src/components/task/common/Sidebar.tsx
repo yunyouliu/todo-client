@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-12-29 11:34:13
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-25 20:37:33
+ * @LastEditTime: 2025-03-19 15:37:00
  */
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { Divider, Collapse, ConfigProvider, Modal } from "antd";
@@ -190,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
           <Droppable droppableId="sidebar">
             {(provided) => (
               <div
-                className="bg-white p-2"
+                className="bg-white p-2 mt-2"
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >

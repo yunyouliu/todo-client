@@ -78,7 +78,6 @@ const Timer: React.FC<TimerProps> = ({ initialTime }) => {
       
         const playAudioAndAlert = async () => {
           await audioRef.current.play(); // Play the audio
-          alert("时间到！");
           handleReset();
         };
       }, 1000);
