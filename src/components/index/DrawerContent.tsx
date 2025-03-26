@@ -12,6 +12,7 @@ import { SyncOutlined } from "@ant-design/icons";
 import Icon from "@/components/index/icon";
 import SideBar from "@/components/task/common/Sidebar";
 import { SidebarItem } from "@/models/sidebar"// 定义类型
+import UserPopover from "./UserPopover";
 
 interface DrawerContentProps {
   avatarSrc: string;
@@ -32,9 +33,9 @@ const DrawerContent: React.FC<DrawerContentProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center justify-between px-4 py-6 fixed bg-white w-[75%] z-20">
+      <div className="flex items-center justify-between px-4 pt-6 fixed bg-white w-[75%] z-20">
         <div className="flex items-center gap-2">
-          <Avatar src={avatarSrc} size={34} shape="square" className="cursor-pointer" />
+          <UserPopover avatar={avatarSrc} size={40} />
         </div>
       </div>
       <div className="flex gap-3 translate-y-6 items-center bg-white absolute right-5 z-20">

@@ -4,9 +4,9 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-26 21:28:17
+ * @LastEditTime: 2025-03-24 15:10:02
  */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "../../global.css";
 import "../assets/iconfont";
 import { Layout, theme, ConfigProvider, Drawer } from "antd";
@@ -18,6 +18,10 @@ import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import DrawerContent from "@/components/index/DrawerContent";
 import { SidebarItem } from "@/models/sidebar";
+import { WebSocketManager } from "@/lib/ws/WebSocketManager";
+import { TaskOperations } from "@/lib/db/taskOperations";
+import { OfflineQueue } from "@/lib/db/offlineSync";
+import { userApi } from "@/api";
 dayjs.locale("zh-cn");
 
 const { Sider, Content } = Layout;
@@ -37,12 +41,25 @@ const Layouts: React.FC = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { activeKey, isopen } = useSelector((state: any) => state.active);
-  const { sidebarData, drawerButtomIcons,buttomIcons } = useSelector(
+  const { sidebarData, drawerButtomIcons, buttomIcons } = useSelector(
     (state: {
-      sidebar: { sidebarData: SidebarItem[]; drawerButtomIcons: SidebarItem[],buttomIcons: SidebarItem[] };
+      sidebar: {
+        sidebarData: SidebarItem[];
+        drawerButtomIcons: SidebarItem[];
+        buttomIcons: SidebarItem[];
+      };
     }) => state.sidebar
   );
   const isTablet = useMediaQuery("(min-width: 499px)");
+  const [avatar, setAvatar] = useState<string>("");
+  useEffect(() => {
+    userApi.getAvatar().then((data) => {
+      setAvatar(
+        data.data.avatar ||
+          "https://avatars.githubusercontent.com/u/199254134?v=4"
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (isTablet && isopen) {
@@ -53,10 +70,9 @@ const Layouts: React.FC = () => {
     }
   }, [isTablet, isopen, dispatch]);
 
-
   useEffect(() => {
     // 直接用 pathname 匹配 sidebarData 和 buttomIcons
-    const activeItem = [...sidebarData, ...buttomIcons].find(item =>
+    const activeItem = [...sidebarData, ...buttomIcons].find((item) =>
       location.pathname.startsWith(item.key)
     );
     dispatch({
@@ -65,7 +81,6 @@ const Layouts: React.FC = () => {
     });
     console.log("activeItem", activeItem?.label);
   }, [location.pathname, sidebarData, buttomIcons]);
-
 
   const handleItemClick = (key: string, lable: string) => {
     // navigate(`/task/${key}`);
@@ -111,9 +126,6 @@ const Layouts: React.FC = () => {
     },
   ];
 
-  const avatarSrc =
-    "https://profile-photo.s3.cn-north-1.amazonaws.com.cn/files/avatar/51270/MTAyNTQxMzgxNTFlc2Q2dmFx/avatar.png?v=ab117780915717552c6df1b7c243c26b";
-
   return (
     <ConfigProvider
       locale={zhCN}
@@ -132,7 +144,7 @@ const Layouts: React.FC = () => {
           closeIcon={null}
         >
           <DrawerContent
-            avatarSrc={avatarSrc}
+            avatarSrc={avatar}
             sidebarData={sidebarData}
             buttomIcons={drawerButtomIcons}
             activeKey={activeKey}
@@ -147,7 +159,7 @@ const Layouts: React.FC = () => {
             theme="light"
             className="hidden tablet:flex"
           >
-            <Sidebar menuItems={menuItems} avatarSrc={avatarSrc} />
+            <Sidebar menuItems={menuItems} avatarSrc={avatar} />
           </Sider>
           <Layout>
             <Content>

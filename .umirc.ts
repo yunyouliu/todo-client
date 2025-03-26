@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2024-11-14 17:50:16
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-17 00:02:54
+ * @LastEditTime: 2025-03-23 23:47:49
  */
 import { defineConfig } from "umi";
 export default defineConfig({
@@ -21,10 +21,15 @@ export default defineConfig({
   proxy: {
     "/api": {
       // 代理的前缀
-      target: "http://localhost:3000/api/", // 后端服务器地址
+      target: "http://localhost:3000/api", // 后端服务器地址
       changeOrigin: true, // 是否跨域
       pathRewrite: { "^/api": "" }, // 重写路径（可选）
     },
+      '/ws': {
+        target: 'ws://localhost:3000', // WebSocket 服务器地址
+        ws: true, // 开启 WebSocket 代理
+        changeOrigin: true,
+      },
   },
   mfsu: {},
   alias: {

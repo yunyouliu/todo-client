@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Form,
   Input,
@@ -10,16 +10,16 @@ import {
 } from "antd";
 import {
   WechatOutlined,
-  AppleFilled,
   GithubOutlined,
-  WeiboCircleFilled,
-  GoogleCircleFilled,
   GoogleOutlined,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
-import { useNavigate } from "umi";
-import { userApi } from "@/api";
-
+import { useNavigate, useDispatch } from "umi";
+import { userApi, taskApi } from "@/api";
+import { TaskOperations } from "@/lib/db/taskOperations";
+import { ITask, db } from "@/lib/db/database";
+import { WebSocketManager } from "@/lib/ws/WebSocketManager";
+import EventHandlers from "@/lib/ws/eventHandlers";
 const { Title, Text } = Typography;
 
 const Index = () => {
@@ -29,9 +29,15 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [agree, setAgree] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   // 在组件顶部添加手机号验证正则
   const PHONE_REGEXP = /^1[3-9]\d{9}$/;
+  const wsManager = WebSocketManager.getInstance("/ws");
 
+
+  useEffect(() => {
+    
+  }, []);
   // 修改注册部分的表单验证规则
   const accountRules = [
     { required: true, message: "请输入手机号或邮箱" },
@@ -61,13 +67,22 @@ const Index = () => {
     try {
       switch (formType) {
         case "login":
-          const loginRes = await userApi.login({
+          const user = await userApi.login({
             username: values.username,
             password: values.password,
           });
-          localStorage.setItem("token", loginRes.token);
+          dispatch({
+            type: "user/login",
+            payload: {
+              id: (user as any).data.user._id,
+              token: (user as any).data.token,
+            },
+          });
+
+          const taskOperations = new TaskOperations(wsManager);
+          // await taskOperations.syncTasksAfterLogin();
           message.success("登录成功");
-          navigate("/task");
+          navigate("/task/all");
           break;
 
         case "register":
@@ -82,7 +97,6 @@ const Index = () => {
           await userApi.register(params);
           message.success("注册成功，请登录");
           setFormType("login");
-
           break;
 
         case "forgetPassword":
@@ -136,7 +150,7 @@ const Index = () => {
           style={{ color: "#1677ff" }}
           className="tablet:text-sm text-base"
         >
-          滴答清单
+          智能清单
         </Title>
       </div>
 
@@ -182,22 +196,24 @@ const Index = () => {
           layout="vertical"
           onFinish={handleSubmit}
           className="mt-6"
-          initialValues={{ remember: true }}
+          // initialValues={{ remember: true }}
+          initialValues={{
+            username: "2876177342@qq.com",
+            password: "123456",
+          }}
         >
           {formType === "login" && (
             <>
-              <Form.Item
-                name="username"
-                rules={accountRules}
-              >
-                <Input placeholder="手机号/邮箱" allowClear />
+              <Form.Item name="username" rules={accountRules}>
+                <Input placeholder="手机号/邮箱" allowClear autoComplete="" />
               </Form.Item>
 
-              <Form.Item
-                name="password"
-                rules={passwordRules}
-              >
-                <Input.Password placeholder="密码" allowClear />
+              <Form.Item name="password" rules={passwordRules}>
+                <Input.Password
+                  placeholder="密码"
+                  allowClear
+                  autoComplete="new-password"
+                />
               </Form.Item>
 
               <Form.Item>
@@ -216,17 +232,11 @@ const Index = () => {
 
           {formType === "register" && (
             <>
-              <Form.Item
-                name="username"
-                rules={accountRules}
-              >
+              <Form.Item name="username" rules={accountRules}>
                 <Input placeholder="手机号/邮箱" allowClear />
               </Form.Item>
 
-              <Form.Item
-                name="password"
-                rules={passwordRules}
-              >
+              <Form.Item name="password" rules={passwordRules}>
                 <Input.Password placeholder="密码：6-64字符" allowClear />
               </Form.Item>
 

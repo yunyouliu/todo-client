@@ -31,15 +31,22 @@ interface ResetPasswordParams {
 }
 export const login = (data: LoginParams) => {
   return request<LoginResponse>({
-    url: "users/login/local",
+    url: "/users/login/local",
     method: "POST",
     data,
   });
 };
 
-export const getUserInfo = () => {
+export const getUserInfo = (data: { id: string }) => {
   return request({
-    url: "users/info",
+    url: "/users/info",
+    method: "GET",
+  });
+};
+
+export const getAvatar = () => {
+  return request({
+    url: "/users/avatar",
     method: "GET",
   });
 };
@@ -47,7 +54,7 @@ export const getUserInfo = () => {
 //register
 export const register = (data: RegisterParams) => {
   return request({
-    url: "users/register",
+    url: "/users/register",
     method: "POST",
     data,
   });
@@ -56,7 +63,7 @@ export const register = (data: RegisterParams) => {
 //reset password
 export const resetPassword = (data: ResetPasswordParams) => {
   return request({
-    url: "users/reset-password",
+    url: "/users/reset-password",
     method: "POST",
     data,
   });

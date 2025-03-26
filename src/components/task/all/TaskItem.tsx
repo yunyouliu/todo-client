@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import CustomCheckbox from "@/components/task/common/CustomCheckbox";
+import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
 import dayjs from "dayjs";
 import { useNavigate, useLocation, useDispatch } from "umi";
@@ -100,6 +100,8 @@ const TaskItem: React.FC<{
     return isActive() ? "bg-gray-100" : "bg-white";
   }, [isActive]);
 
+  const handlePriorityClick = useCallback(() => {}, [priority]);
+
   return (
     <div
       className={`relative flex items-center py-2 border-b hover:bg-gray-100 rounded-xl  p-4 group ${bgclassName}`}
@@ -107,10 +109,10 @@ const TaskItem: React.FC<{
     >
       {/* 左侧内容：checkbox + 任务标题 */}
       <div className="flex items-center gap-2 overflow-hidden pr-20">
-        <CustomCheckbox
-          checked={checked}
-          borderColor={checked ? "#9CA3AF" : borderColor}
-          color={checked ? "#9CA3AF" : color}
+        <PriorityCheckbox
+          priority={priority}
+          checked
+          onClick={handlePriorityClick}
         />
         <div className="flex items-center w-full min-h-[24px]">
           {/* 可编辑任务标题 */}
@@ -136,7 +138,9 @@ const TaskItem: React.FC<{
       </div>
 
       {/* 右侧内容 */}
-      <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center group-hover:bg-gray-100 ${bgclassName}  pl-2`}>
+      <div
+        className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center group-hover:bg-gray-100 ${bgclassName}  pl-2`}
+      >
         {/* 标签 */}
         <div className="flex items-center gap-1 cursor-pointer">
           {tags.map((tag, index) => (

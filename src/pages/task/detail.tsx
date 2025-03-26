@@ -4,16 +4,17 @@
  * @Author: yunyouliu
  * @Date: 2025-03-09 20:49:07
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-21 00:19:45
+ * @LastEditTime: 2025-03-21 19:57:35
  */
 import { MilkdownProvider } from "@milkdown/react";
 import CrepeEditor from "@/components/task/input/CrepeEditor";
 import { useLocation } from "umi";
-import CustomCheckbox from "@/components/task/common/CustomCheckbox";
+import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
 import { useState } from "react";
 import { formatRelativeDate } from "@/utils/getDateLabel";
-import { Input, Progress, Tooltip } from "antd";
+import { Input, Progress, Tooltip, Popover } from "antd";
+import Priority from "@/components/task/common/priority";
 
 const Detail: React.FC = () => {
   const location = useLocation();
@@ -34,7 +35,11 @@ const Detail: React.FC = () => {
     const finalPercent = rawPercent < 5 ? 0 : Math.round(rawPercent / 10) * 10;
     setProgressPercent(Math.min(Math.max(finalPercent, 0), 100));
   };
-  
+
+  const handleSelected = (value: string, label: string) => {
+    setPriority(value as "none" | "low" | "medium" | "high");
+  };
+
   const id = location.pathname.match(/\/task\/all\/(\d+)/)?.[1];
   if (!id) return null;
   return (
@@ -46,7 +51,7 @@ const Detail: React.FC = () => {
         <div className="flex-1 flex items-center justify-between h-full">
           {/* 左侧区域 */}
           <div className="flex items-center gap-4">
-            <CustomCheckbox borderColor="#EF4444" color="#EF4444" />
+            <PriorityCheckbox checked={false} priority={priority} onClick={() => {}} />
             {/* 日期相关交互区域 */}
             <div className="flex items-center gap-1 hover:bg-gray-100 rounded-sm p-1 relative before:content-[''] before:block before:w-[1px] before:h-4 before:bg-gray-300 before:absolute before:-left-1.5">
               <div className="flex items-center rounded-sm cursor-pointer">
@@ -70,20 +75,19 @@ const Detail: React.FC = () => {
 
           {/* 右侧优先级区域 */}
           <div className="flex items-center gap-2">
-            <div
-              className="p-1 hover:bg-gray-100 rounded-sm cursor-pointer transition-colors"
-              onClick={() => {
-                const levels: ("none" | "low" | "medium" | "high")[] = [
-                  "none",
-                  "low",
-                  "medium",
-                  "high",
-                ];
-                setPriority((prev) => levels[(levels.indexOf(prev) + 1) % 4]);
-              }}
+            <Popover
+              trigger="click"
+              placement="bottom"
+              arrow={false}
+              overlayInnerStyle={{ padding: 1 }}
+              content={
+                <Priority selected={priority} setSelected={handleSelected} />
+              }
             >
-              <Icon name={priority} size={25} />
-            </div>
+              <div className="p-1 rounded-sm cursor-pointer transition-colors">
+                <Icon name={priority} size={25} />
+              </div>
+            </Popover>
           </div>
         </div>
         {/* <div className="w-full h-px">
@@ -105,13 +109,13 @@ const Detail: React.FC = () => {
           placement="bottom"
         >
           <div
-            className="w-full h-px cursor-pointer relative"
+            className="w-full h-px cursor-pointer relative -mt-2"
             onClick={handleProgressClick}
           >
             <Progress
               percent={progressPercent}
               showInfo={false}
-              strokeWidth={1}
+              size={1}
               strokeColor="#1298EB" //蓝色
               trailColor="#f0f0f0"
               className="!m-0 progress-divider"
@@ -122,7 +126,11 @@ const Detail: React.FC = () => {
           </div>
         </Tooltip>
         <div className="mt-6">
-          <Input placeholder="准备做什么" variant="borderless" className="text-xl font-bold"/>
+          <Input
+            placeholder="准备做什么"
+            variant="borderless"
+            className="text-xl font-bold"
+          />
         </div>
       </header>
 

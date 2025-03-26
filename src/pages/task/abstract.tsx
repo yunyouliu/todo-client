@@ -4,7 +4,7 @@
  * @Author: yunyouliu
  * @Date: 2025-02-21 16:01:56
  * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-10 18:26:45
+ * @LastEditTime: 2025-03-21 00:47:42
  */
 import React, { useEffect, useState } from "react";
 import Vditor from "vditor";
@@ -21,6 +21,7 @@ const Abstract: React.FC = () => {
           `);
         setVd(vditor);
       },
+      
       minHeight: 600,
       width: "100%",
     });
@@ -37,7 +38,7 @@ const Abstract: React.FC = () => {
         <Select defaultValue="上月" size="small" />
         <Select defaultValue="上月" size="small" />
       </div>
-      <div id="vditor" className="vditor text-left  mt-2 p-0" />
+      <div id="vditor" className="vditor text-left  mt-2 !p-0" />
     </div>
   );
 };
