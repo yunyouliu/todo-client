@@ -1,4 +1,3 @@
-// src/models/user.ts
 import { Effect, Reducer } from "umi";
 
 export interface UserModelState {

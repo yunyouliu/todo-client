@@ -1,7 +1,4 @@
-// src/lib/db/database.ts
 import Dexie, { Table } from 'dexie';
-
-// src/lib/db/database.ts
 export interface ITask {
   _id: string;  // 改为必选属性
   title: string;

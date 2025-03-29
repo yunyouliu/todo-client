@@ -78,9 +78,6 @@ const Index = () => {
               token: (user as any).data.token,
             },
           });
-
-          const taskOperations = new TaskOperations(wsManager);
-          // await taskOperations.syncTasksAfterLogin();
           message.success("登录成功");
           navigate("/task/all");
           break;

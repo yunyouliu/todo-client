@@ -16,15 +16,15 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   onClick,
   ...props
 }) => {
+  // 根据 Ant Design 版本选择正确的主题变量名称
+  const themeVariable = {
+    // 如果使用 Ant Design 4.x，使用 primaryColor
+    primaryColor: color || "#1677ff", // 勾选颜色
+    colorBorder: borderColor || "#d9d9d9", // 边框颜色
+  };
+
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: color || "#1677ff", // 勾选颜色
-          colorBorder: borderColor || "#d9d9d9", // 边框颜色
-        },
-      }}
-    >
+    <ConfigProvider theme={{ token: themeVariable }}>
       <Checkbox {...props} checked={checked} onClick={onClick} />
     </ConfigProvider>
   );
@@ -35,17 +35,16 @@ export const PriorityCheckbox = ({
   checked,
   onClick,
 }: {
-  priority: "none" | "low" | "medium" | "high";
+  priority: number;
   checked: boolean;
   onClick: () => void;
 }) => {
-  // 优先级颜色映射
-  const priorityColors = {
-    none: { color: "#d9d9d9", borderColor: "#d9d9d9" },
-    low: { color: "#52c41a", borderColor: "#52c41a" },
-    medium: { color: "#faad14", borderColor: "#faad14" },
-    high: { color: "#ff4d4f", borderColor: "#ff4d4f" },
-  };
+  const priorityColors = new Map([
+    [0, { color: "#d9d9d9", borderColor: "#d9d9d9" }],
+    [1, { color: "#52c41a", borderColor: "#52c41a" }],
+    [2, { color: "#faad14", borderColor: "#faad14" }],
+    [3, { color: "#ff4d4f", borderColor: "#ff4d4f" }],
+  ]);
 
   // 已完成状态下的样式
   const completedStyle = checked
@@ -54,7 +53,7 @@ export const PriorityCheckbox = ({
         borderColor: "#a3a3a3",
         textDecoration: "line-through",
       }
-    : priorityColors[priority];
+    : priorityColors.get(priority) || { color: "#000", borderColor: "#000" };
 
   return (
     <CustomCheckbox

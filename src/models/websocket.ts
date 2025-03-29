@@ -1,8 +1,7 @@
-// src/models/websocket.ts
 import { Effect, Reducer } from "umi";
 import { WebSocketManager } from "@/lib/ws/WebSocketManager";
 import { TaskOperations } from "@/lib/db/taskOperations";
-import { OfflineQueue } from "@/lib/db/offlineSync";
+import EventHandlers from "@/lib/ws/eventHandlers";
 
 // WebSocket 状态定义
 export interface WebSocketState {
@@ -60,17 +59,24 @@ const WebSocketModel: WebSocketModelType = {
     // 初始化 WebSocket 连接
     *initialize(_, { call, put, select }) {
       try {
+        const { isConnected }: { isConnected: boolean } = yield select(
+          (state: { websocket: WebSocketState }) => state.websocket
+        );
+        if (isConnected) return;
+
         const wsManager = WebSocketManager.getInstance("/ws");
         const taskOps = new TaskOperations(wsManager);
-
+        yield call([taskOps, taskOps.initialize]);
+        //  注册事件处理器
+        EventHandlers.register(wsManager);
         // 初始化任务操作管理
         yield call([taskOps, taskOps.initialize]);
 
         // 监听 WebSocket 事件
         wsManager
-          .on("open", () =>
-            put({ type: "updateStatus", payload: { isConnected: true } })
-          )
+          .on("open", () => {
+            put({ type: "updateStatus", payload: { isConnected: true } });
+          })
           .on("close", () => put({ type: "onClose" }))
           .on("error", (err) => put({ type: "recordError", payload: err }));
 
@@ -84,19 +90,7 @@ const WebSocketModel: WebSocketModelType = {
 
     // 处理 WebSocket 断线重连
     *handleReconnect(_, { put, select, delay }) {
-      const { retryCount }: { retryCount: number } = yield select(
-        (state: { websocket: WebSocketState }) => state.websocket
-      );
-
-      // 最多重试 5 次，指数退避策略
-      if (retryCount < 5) {
-        yield delay(Math.min(1000 * Math.pow(2, retryCount), 30000));
-        yield put({
-          type: "updateStatus",
-          payload: { retryCount: retryCount + 1 },
-        });
-        yield put({ type: "initialize" });
-      }
+      yield put({ type: "checkConnection" }); // 仅检查状态
     },
 
     // 检查 WebSocket 连接状态，如果断开则重连
@@ -114,31 +108,31 @@ const WebSocketModel: WebSocketModelType = {
     },
   },
 
-    subscriptions: {
-      setup({ dispatch }: { dispatch: (arg: any) => void }) {
-        // 初始化 WebSocket 连接
-        dispatch({ type: "initialize" });
-    
-        // 监听网络恢复，重新检查 WebSocket 连接
-        const handleOnline = () => {
-          dispatch({ type: "checkConnection" });
-          OfflineQueue.retryFailed(); // 重新处理失败的请求
-        };
-    
-        window.addEventListener("online", handleOnline);
-    
-        // 每 5 分钟检查一次 WebSocket 连接状态
-        const timer = setInterval(() => {
-          dispatch({ type: "checkConnection" });
-        }, 300_000);
-    
-        return () => {
-          window.removeEventListener("online", handleOnline);
-          clearInterval(timer);
-        };
-      },
-    },
+  subscriptions: {
+    setup({ dispatch }: { dispatch: (arg: any) => void }) {
+      // 初始化 WebSocket 连接
+      dispatch({ type: "initialize" });
 
+      // 监听网络恢复，重新检查 WebSocket 连接
+      const handleOnline = () => {
+        dispatch({ type: "checkConnection" });
+      };
+
+      window.addEventListener("online", handleOnline);
+
+      // 每 5 分钟检查一次 WebSocket 连接状态
+      const timer = setInterval(() => {
+        dispatch({ type: "checkConnection" });
+      }, 300_000);
+
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        clearInterval(timer);
+        EventHandlers.unregister();
+        WebSocketManager.getInstance("/ws").close(); // 关闭连接
+      };
+    },
+  },
 };
 
 export default WebSocketModel;

@@ -1,25 +1,18 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
 import dayjs from "dayjs";
-import { useNavigate, useLocation, useDispatch } from "umi";
-
-const PRIORITY_COLORS: Record<string, { borderColor: string; color: string }> =
-  {
-    none: { borderColor: "#9CA3AF", color: "#9CA3AF" }, // 灰色
-    low: { borderColor: "#3B82F6", color: "#3B82F6" }, // 蓝色
-    medium: { borderColor: "#FACC15", color: "#FACC15" }, // 黄色
-    high: { borderColor: "#EF4444", color: "#EF4444" }, // 红色
-  };
-
+import { useNavigate, useLocation, useSelector } from "umi";
+import { db } from "@/lib/db/database";
+import { useDispatch } from "umi";
 const TaskItem: React.FC<{
   id: string;
   title?: string; // 任务标题
-  date: string; // 任务日期
+  date?: string; // 任务日期
   List?: string;
   ListId?: string;
-  tags: string[]; // 任务标签
-  priority?: "none" | "low" | "medium" | "high"; // 任务优先级
+  tags?: string[]; // 任务标签
+  priority?: number; // 任务优先级
   checked?: boolean; // 是否完成
   hasAttachment?: boolean; // 是否有附件
   hasContent?: boolean; // 是否有内容
@@ -32,7 +25,7 @@ const TaskItem: React.FC<{
   tags,
   List = "收集箱",
   ListId = "inbox",
-  priority = "none",
+  priority = 0,
   checked = false,
   hasAttachment = false,
   hasContent = false,
@@ -46,21 +39,18 @@ const TaskItem: React.FC<{
   const formattedDate = isThisYear
     ? taskDate.format("M月D日")
     : taskDate.format("YYYY年M月D日");
-  const priorityStyles = useMemo(() => PRIORITY_COLORS[priority], [priority]);
-  const { borderColor, color } = priorityStyles;
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(initialTitle || "无标题");
   const navigate = useNavigate();
-  const location = useLocation(); // 判断当前路径是否已包含 ID
+  const location = useLocation();
+  const [matchTags, setMatchTags] = useState<string[]>([]);
   const textClass = useMemo(
     () => (checked ? "text-[#19191933]" : "text-gray-800"),
     [checked]
   );
   const dispatch = useDispatch();
-  /** 处理输入框变化 */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-  };
+  const Tags = useSelector((state: any) => state.tag.tags);
+  // 初始化操作类
   const handleTitleClick = useCallback(() => {
     if (!id) return;
     const pathParts = location.pathname.split("/");
@@ -77,6 +67,13 @@ const TaskItem: React.FC<{
     setIsEditing(true);
   }, [id, location.pathname, navigate]);
 
+  useEffect(() => {
+    const matched = tags
+      ?.map((tag) => Tags.find((t: any) => t.name === tag))
+      .filter(Boolean) as any[];
+    setMatchTags(matched);
+  }, [tags, Tags]);
+
   /** 处理回车确认 */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -84,6 +81,31 @@ const TaskItem: React.FC<{
     }
   };
 
+  // 状态更新操作
+  const handleStatusClick = useCallback(() => {
+    dispatch({
+      type: "task/updateTask",
+      payload: {
+        id,
+        changes: { status: checked ? 0 : 2 },
+      },
+    });
+  }, [id, checked]);
+
+  // 标题更新操作
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTitle(e.target.value);
+      dispatch({
+        type: "task/updateTask",
+        payload: {
+          id,
+          changes: { title: e.target.value },
+        },
+      });
+    },
+    [id]
+  );
   /** 失去焦点时确认修改 */
   const handleBlur = () => {
     if (!title.trim()) {
@@ -111,8 +133,8 @@ const TaskItem: React.FC<{
       <div className="flex items-center gap-2 overflow-hidden pr-20">
         <PriorityCheckbox
           priority={priority}
-          checked
-          onClick={handlePriorityClick}
+          checked={checked}
+          onClick={handleStatusClick}
         />
         <div className="flex items-center w-full min-h-[24px]">
           {/* 可编辑任务标题 */}
@@ -129,7 +151,7 @@ const TaskItem: React.FC<{
             />
           ) : (
             <span
-              className={`truncate w-auto cursor-text min-h-[24px] leading-6 ${textClass}`}
+              className={`truncate w-auto cursor-text min-h-[24px] leading-6 ${title == "无标题" ? "text-gray-800" : textClass}`}
             >
               {title}
             </span>
@@ -143,14 +165,13 @@ const TaskItem: React.FC<{
       >
         {/* 标签 */}
         <div className="flex items-center gap-1 cursor-pointer">
-          {tags.map((tag, index) => (
+          {matchTags?.map((tag: any, index) => (
             <span
               key={index}
-              className={`rounded-xl px-2 py-1 text-xs ${
-                tag === "生日" ? "bg-pink-300" : "bg-yellow-300"
-              }`}
+              className="rounded-xl px-2 py-1 text-xs"
+              style={{ backgroundColor: tag.color }}
             >
-              {tag}
+              {tag.name}
             </span>
           ))}
         </div>
@@ -180,7 +201,7 @@ const TaskItem: React.FC<{
                 : "text-blue-500"
           }`}
         >
-          {formattedDate}
+          {date && formattedDate}
         </span>
       </div>
     </div>
