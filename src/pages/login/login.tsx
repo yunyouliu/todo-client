@@ -14,12 +14,9 @@ import {
   GoogleOutlined,
 } from "@ant-design/icons";
 import "antd/dist/reset.css";
-import { useNavigate, useDispatch } from "umi";
-import { userApi, taskApi } from "@/api";
-import { TaskOperations } from "@/lib/db/taskOperations";
-import { ITask, db } from "@/lib/db/database";
-import { WebSocketManager } from "@/lib/ws/WebSocketManager";
-import EventHandlers from "@/lib/ws/eventHandlers";
+import { useNavigate, useDispatch, useParams } from "umi";
+import { userApi } from "@/api";
+
 const { Title, Text } = Typography;
 
 const Index = () => {
@@ -30,14 +27,19 @@ const Index = () => {
   const [agree, setAgree] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   // 在组件顶部添加手机号验证正则
   const PHONE_REGEXP = /^1[3-9]\d{9}$/;
-  const wsManager = WebSocketManager.getInstance("/ws");
-
-
+  const { t } = useParams();
   useEffect(() => {
-    
-  }, []);
+    if (t) {
+      localStorage.setItem("t", t);
+      dispatch({
+        type: "task/syncTasksAfterLogin",
+      });
+      navigate("/task/all");
+    }
+  }, [t]);
   // 修改注册部分的表单验证规则
   const accountRules = [
     { required: true, message: "请输入手机号或邮箱" },
@@ -78,6 +80,9 @@ const Index = () => {
               token: (user as any).data.token,
             },
           });
+          dispatch({
+            type: "task/syncTasksAfterLogin",
+          });
           message.success("登录成功");
           navigate("/task/all");
           break;
@@ -102,7 +107,7 @@ const Index = () => {
           break;
       }
     } catch (error: any) {
-      message.error(error?.response?.data?.message || "操作失败");
+      message.error(error?.response?.data?.message || "error");
     } finally {
       setLoading(false);
     }

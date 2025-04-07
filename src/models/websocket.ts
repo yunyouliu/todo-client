@@ -23,7 +23,6 @@ export interface WebSocketModelType {
   };
   effects: {
     initialize: Effect; // 初始化 WebSocket 连接
-    handleReconnect: Effect; // 处理 WebSocket 断线重连
     checkConnection: Effect; // 检查 WebSocket 连接状态
   };
   subscriptions: {
@@ -65,19 +64,23 @@ const WebSocketModel: WebSocketModelType = {
         if (isConnected) return;
 
         const wsManager = WebSocketManager.getInstance("/ws");
-        const taskOps = new TaskOperations(wsManager);
+        const taskOps = new TaskOperations(wsManager, "timestamp");
         yield call([taskOps, taskOps.initialize]);
         //  注册事件处理器
         EventHandlers.register(wsManager);
-        // 初始化任务操作管理
-        yield call([taskOps, taskOps.initialize]);
-
-        // 监听 WebSocket 事件
+        const closeHandler = (event: { code: number }) => {
+          // 如果是正常关闭（code 1000），不触发重连
+          if (event.code === 1000) {
+            put({ type: "updateStatus", payload: { isConnected: false } });
+          } else {
+            put({ type: "checkConnection" }); // 触发重连检查
+          }
+        };
         wsManager
-          .on("open", () => {
-            put({ type: "updateStatus", payload: { isConnected: true } });
-          })
-          .on("close", () => put({ type: "onClose" }))
+          .on("open", () =>
+            put({ type: "updateStatus", payload: { isConnected: true } })
+          )
+          .on("close", closeHandler) // 正确触发 onClose
           .on("error", (err) => put({ type: "recordError", payload: err }));
 
         // 初始化离线队列监控
@@ -87,24 +90,30 @@ const WebSocketModel: WebSocketModelType = {
         yield put({ type: "handleReconnect" });
       }
     },
-
-    // 处理 WebSocket 断线重连
-    *handleReconnect(_, { put, select, delay }) {
-      yield put({ type: "checkConnection" }); // 仅检查状态
-    },
-
     // 检查 WebSocket 连接状态，如果断开则重连
-    *checkConnection(_, { put, select }) {
-      interface WebSocketStateSelector {
-        websocket: WebSocketState;
+    *checkConnection(_, { put, select, delay }) {
+      const { isConnected, retryCount }: WebSocketState = yield select(
+        (state: { websocket: WebSocketState }) => state.websocket
+      );
+
+      if (isConnected) return;
+
+      // 限制最大重试次数（例如5次）
+      if (retryCount >= 5) {
+        console.error("已达最大重试次数，停止重连");
+        return;
       }
 
-      const { isConnected }: { isConnected: boolean } = yield select(
-        (state: WebSocketStateSelector) => state.websocket
-      );
-      if (!isConnected) {
-        yield put({ type: "handleReconnect" });
-      }
+      // 指数退避延迟
+      const backoffDelay = Math.min(1000 * 2 ** retryCount, 30000);
+      yield delay(backoffDelay);
+
+      // 触发重新初始化
+      yield put({ type: "initialize" });
+      yield put({
+        type: "updateStatus",
+        payload: { retryCount: retryCount + 1 },
+      });
     },
   },
 

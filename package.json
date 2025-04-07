@@ -20,12 +20,14 @@
     "dayjs": "^1.11.13",
     "dexie": "^4.0.11",
     "gsap": "^3.12.5",
+    "lodash": "^4.17.21",
     "react-beautiful-dnd": "^13.1.1",
     "umi": "^4.3.32",
     "vditor": "^3.10.9"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "@types/lodash": "^4.17.16",
     "@types/react": "^18.3.12",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.0.11",

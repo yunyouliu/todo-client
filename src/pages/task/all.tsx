@@ -6,7 +6,7 @@
  * @LastEditors: yunyouliu
  * @LastEditTime: 2025-03-12 18:40:27
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import TextInput from "@/components/task/input/TextInput";
 import { Input, Collapse, ConfigProvider } from "antd";
 import type { CollapseProps } from "antd";
@@ -44,64 +44,66 @@ const renderTaskItems = (tasks: ITask[]) =>
 const All: React.FC = () => {
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [textValue, setTextValue] = useState<string>("");
-  const [selectedPriority, setSelectedPriority] = useState<string | null>(
-    "none"
-  );
+  const [selectedPriority, setSelectedPriority] = useState<number | null>(0);
   const dispatch = useDispatch();
   const { tasks } = useSelector((state: any) => state.task);
-
-  // 初始化加载数据
-  useEffect(() => {
-    dispatch({ type: "task/loadTasks" });
-    dispatch({ type: "task/watchDBChanges" }); // 启动监听
-  }, []);
-
   interface GroupedTasks {
     completed: ITask[];
     overdue: ITask[];
     upcoming: ITask[];
     noDate: ITask[];
   }
+  // 使用useMemo优化分组计算，依赖tasks变化
+  const groupedTasks = useMemo(
+    () => ({
+      completed: tasks.filter((task: ITask) => task.status === 2),
+      overdue: tasks.filter(
+        (task: ITask) =>
+          task.status !== 2 &&
+          task.dueDate &&
+          new Date(task.dueDate) < new Date()
+      ),
+      upcoming: tasks.filter(
+        (task: ITask) =>
+          task.status !== 2 &&
+          task.dueDate &&
+          new Date(task.dueDate) >= new Date()
+      ),
+      noDate: tasks.filter((task: ITask) => task.status !== 2 && !task.dueDate),
+    }),
+    [tasks]
+  ); // 依赖tasks更新
 
-  const groupedTasks: GroupedTasks = {
-    completed: tasks.filter((task: ITask) => task.status === 2), // 已完成优先
-    overdue: tasks.filter(
-      (task: ITask) =>
-        task.status !== 2 && task.dueDate && new Date(task.dueDate) < new Date()
-    ),
-    upcoming: tasks.filter(
-      (task: ITask) =>
-        task.status !== 2 &&
-        task.dueDate &&
-        new Date(task.dueDate) >= new Date()
-    ),
-    noDate: tasks.filter((task: ITask) => task.status !== 2 && !task.dueDate),
-  };
-
-  // 任务折叠面板
-  const items: CollapseProps["items"] = [
-    {
-      key: "1",
-      label: <Span text="已过期" count={groupedTasks.overdue.length} />,
-      children: renderTaskItems(groupedTasks.overdue),
-      extra: <span className="text-blue-500 text-xs cursor-pointer">顺延</span>,
-    },
-    {
-      key: "2",
-      label: <Span text="更远" count={groupedTasks.upcoming.length} />,
-      children: renderTaskItems(groupedTasks.upcoming),
-    },
-    {
-      key: "3",
-      label: <Span text="无日期" count={groupedTasks.noDate.length} />,
-      children: renderTaskItems(groupedTasks.noDate),
-    },
-    {
-      key: "4",
-      label: <Span text="已完成" count={groupedTasks.completed.length} />,
-      children: renderTaskItems(groupedTasks.completed),
-    },
-  ].filter((item) => item.children.length > 0); // 过滤掉没有任务的分类
+  // 动态生成Collapse items，依赖groupedTasks
+  const items: CollapseProps["items"] = useMemo(
+    () =>
+      [
+        {
+          key: "1",
+          label: <Span text="已过期" count={groupedTasks.overdue.length} />,
+          children: renderTaskItems(groupedTasks.overdue),
+          extra: (
+            <span className="text-blue-500 text-xs cursor-pointer">顺延</span>
+          ),
+        },
+        {
+          key: "2",
+          label: <Span text="更远" count={groupedTasks.upcoming.length} />,
+          children: renderTaskItems(groupedTasks.upcoming),
+        },
+        {
+          key: "3",
+          label: <Span text="无日期" count={groupedTasks.noDate.length} />,
+          children: renderTaskItems(groupedTasks.noDate),
+        },
+        {
+          key: "4",
+          label: <Span text="已完成" count={groupedTasks.completed.length} />,
+          children: renderTaskItems(groupedTasks.completed),
+        },
+      ].filter((item) => item.children.length > 0),
+    [groupedTasks]
+  );
 
   return (
     <div className="container -mt-3 px-4">
@@ -115,6 +117,7 @@ const All: React.FC = () => {
       )}
       {(isInputVisible || textValue) && (
         <TextInput
+          initDate={new Date().toISOString()} // Provide a valid initDate value
           value={textValue}
           selected={selectedPriority}
           onBlur={() => setIsInputVisible(false)}

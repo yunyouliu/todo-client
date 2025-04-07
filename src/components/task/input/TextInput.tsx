@@ -3,17 +3,19 @@ import { Button, Input, Popover } from "antd";
 import Icon from "@/components/index/icon";
 import Priority from "@/components/task/common/priority";
 import Remind from "@/components/task/common/Remind";
-import dayjs from "dayjs"; // 日期处理库
-import{getDateLabel} from "@/utils/getDateLabel";
+import dayjs from "dayjs";
+import List from "@/components/task/common/List";
+import { getDateLabel } from "@/utils/getDateLabel";
 const { TextArea } = Input;
 
 interface TextInputProps {
   className?: string;
+  initDate: string;
   onBlur: () => void;
   value: string;
-  selected: string | null;
+  selected: number | null;
   onChange: (newValue: string) => void;
-  onPriorityChange: (newPriority: string,lable:string) => void;
+  onPriorityChange: (newPriority: number | number, lable: string) => void;
 }
 
 interface IconProps {
@@ -25,6 +27,7 @@ interface IconProps {
 
 const TextInput: React.FC<TextInputProps> = ({
   className, // 自定义类名
+  initDate,
   value, // 输入框内容
   selected, // 优先级
   onBlur, // 失去焦点事件处理函数
@@ -33,15 +36,26 @@ const TextInput: React.FC<TextInputProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null); // 当前选中的日期
 
-
   const dateLabel = getDateLabel(selectedDate);
-
+  const getIconName = (Priority: number): string => {
+    switch (Priority) {
+      case 3:
+        return "red";
+      case 2:
+        return "yellow";
+      case 1:
+        return "blue";
+      default:
+        return "none";
+    }
+  };
   const icons: IconProps[] = [
     {
       name: "日期设置",
       size: 26,
       content: (
         <Remind
+          initDate={initDate}
           onSelect={(date: string) => setSelectedDate(date)} // 回调函数更新选中的日期
         />
       ),
@@ -66,19 +80,11 @@ const TextInput: React.FC<TextInputProps> = ({
     {
       name: "优先级",
       size: 25,
-      content: <Priority selected={selected} setSelected={onPriorityChange}/>,
+      content: <Priority selected={selected} setSelected={onPriorityChange} />,
       renderNode: (
         <div className="flex items-center">
           <Icon
-            name={
-              selected === "高优先级"
-                ? "red"
-                : selected === "中优先级"
-                  ? "yellow"
-                  : selected === "低优先级"
-                    ? "blue"
-                    : "none"
-            } // 动态替换图标
+            name={getIconName(selected || 0)} // 动态替换图标
             size={25}
             className="cursor-pointer text-gray-300 rounded-lg hover:bg-slate-100 p-0.5"
           />
@@ -88,7 +94,7 @@ const TextInput: React.FC<TextInputProps> = ({
     {
       name: "移动到",
       size: 25,
-      content: "移动到",
+      content: <List />,
       renderNode: (
         <Icon
           name="yidongdao"
@@ -169,7 +175,7 @@ const TextInput: React.FC<TextInputProps> = ({
         disabled={!value}
         onMouseDown={(e) => e.preventDefault()}
       >
-        添加  
+        添加
       </Button>
     </div>
   );

@@ -1,6 +1,6 @@
-import Dexie, { Table } from 'dexie';
+import Dexie, { Table } from "dexie";
 export interface ITask {
-  _id: string;  // 改为必选属性
+  _id: string;
   title: string;
   content: string;
   columnId: string;
@@ -13,6 +13,7 @@ export interface ITask {
   tags: string[];
   attachments: string[];
   childIds: string[];
+  progress: number;
   commentCount: number;
   startDate?: Date;
   dueDate?: Date;
@@ -24,27 +25,30 @@ export interface ITask {
   repeatFlag?: string;
   createdAt: Date;
   updatedAt: Date;
-  syncStatus?: 'synced' | 'pending' | 'failed'; // 新增同步状态字段
+  syncStatus?: "synced" | "pending" | "failed"; // 新增同步状态字段
 }
 
 export class TodoDB extends Dexie {
-  tasks!: Table<ITask, string>;  // 主键类型为 string
+  tasks!: Table<ITask, string>;
 
   constructor() {
-    super('TodoDB');
-    
+    super("TodoDB");
+
     this.version(2).stores({
-      tasks: "_id"
+      tasks: "_id",
     });
 
     // 版本迁移逻辑
-    this.version(1).upgrade(tx => {
-      return tx.table('tasks').toCollection().modify(task => {
-        // 将旧版字段转换为新版格式
-        task._id = task.id || crypto.randomUUID();
-        task.isDeleted = task.isDeleted || false;
-        task.timeZone = task.timeZone || 'Asia/Shanghai';
-      });
+    this.version(1).upgrade((tx) => {
+      return tx
+        .table("tasks")
+        .toCollection()
+        .modify((task) => {
+          // 将旧版字段转换为新版格式
+          task._id = task.id || crypto.randomUUID();
+          task.isDeleted = task.isDeleted || false;
+          task.timeZone = task.timeZone || "Asia/Shanghai";
+        });
     });
   }
 }

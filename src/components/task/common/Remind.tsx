@@ -56,9 +56,10 @@ const bottomIcon = [
   },
 ];
 
-const Remind: React.FC<{ onSelect: (date: string) => void }> = ({
-  onSelect,
-}) => {
+const Remind: React.FC<{
+  onSelect: (date: string) => void;
+  initDate: string;
+}> = ({ onSelect }) => {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
 
   const handleIconClick = (action: () => Dayjs) => {

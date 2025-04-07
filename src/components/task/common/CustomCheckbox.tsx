@@ -18,7 +18,6 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
 }) => {
   // 根据 Ant Design 版本选择正确的主题变量名称
   const themeVariable = {
-    // 如果使用 Ant Design 4.x，使用 primaryColor
     primaryColor: color || "#1677ff", // 勾选颜色
     colorBorder: borderColor || "#d9d9d9", // 边框颜色
   };
@@ -41,7 +40,7 @@ export const PriorityCheckbox = ({
 }) => {
   const priorityColors = new Map([
     [0, { color: "#d9d9d9", borderColor: "#d9d9d9" }],
-    [1, { color: "#52c41a", borderColor: "#52c41a" }],
+    [1, { color: "#1590EE", borderColor: "#1590EE" }],
     [2, { color: "#faad14", borderColor: "#faad14" }],
     [3, { color: "#ff4d4f", borderColor: "#ff4d4f" }],
   ]);

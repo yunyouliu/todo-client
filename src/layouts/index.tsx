@@ -48,15 +48,30 @@ const Layouts: React.FC = () => {
     }) => state.sidebar
   );
   const isTablet = useMediaQuery("(min-width: 499px)");
-  const [avatar, setAvatar] = useState<string>("");
+  // 👇 优化后的 Avatar 处理
+  const DEFAULT_AVATAR =
+    "https://avatars.githubusercontent.com/u/124491302?v=4"; // 默认头像路径
+  const [avatar, setAvatar] = useState<string>(() => {
+    const storedAvatar = localStorage.getItem("avatar");
+    return storedAvatar || DEFAULT_AVATAR;
+  });
   useEffect(() => {
-    userApi.getAvatar().then((data) => {
-      setAvatar(
-        data.data.avatar ||
-          "https://avatars.githubusercontent.com/u/199254134?v=4"
-      );
-    });
-  }, []);
+    const fetchAvatar = async () => {
+      try {
+        const response = await userApi.getAvatar();
+        if (response.success && response.data.avatar) {
+          setAvatar(response.data.avatar);
+          localStorage.setItem("avatar", response.data.avatar);
+        } else {
+          setAvatar(DEFAULT_AVATAR);
+          localStorage.setItem("avatar", DEFAULT_AVATAR);
+        }
+      } catch (error) {
+        console.error("Failed to fetch avatar:", error);
+      }
+    };
+    fetchAvatar();
+  }, []); // 只在组件挂载时运行一次
 
   useEffect(() => {
     if (isTablet && isopen) {

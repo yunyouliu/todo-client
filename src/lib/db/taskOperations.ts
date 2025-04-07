@@ -29,13 +29,17 @@ export class TaskOperations {
   constructor(
     private wsManager: WebSocketManager,
     private syncStrategy: SyncStrategy = "timestamp"
-  ) {}
+  ) {
+    // 新增构造函数绑定
+    this.createTask = this.createTask.bind(this);
+    this.updateTask = this.updateTask.bind(this);
+    this.deleteTask = this.deleteTask.bind(this);
+  }
 
   /**
    * 初始化任务操作类，设置数据库钩子和WebSocket监听器
    */
   initialize() {
-    this.setupHooks();
     this.setupListeners();
   }
 
@@ -113,6 +117,45 @@ export class TaskOperations {
         setTimeout(() => reject("timeout"), TaskOperations.SYNC_TIMEOUT)
       ),
     ]);
+  }
+
+  /**
+   * 创建任务并同步
+   */
+  public async createTask(task: Omit<ITask, "_id">): Promise<string> {
+    // @ts-ignore
+    const fullTask: ITask = {
+      ...task,
+      syncStatus: "pending",
+    };
+    await db.tasks.add(fullTask);
+    await this.trySyncOperation("create", fullTask);
+    return fullTask._id;
+  }
+
+  /**
+   * 更新任务并同步
+   */
+  public async updateTask(id: string, changes: Partial<ITask>): Promise<void> {
+    const originalTask = await db.tasks.get(id);
+    if (!originalTask) throw new Error("任务不存在");
+    const updatedTask: ITask = {
+      ...originalTask,
+      ...changes,
+      updatedAt: new Date(),
+    };
+    await db.tasks.update(id, changes);
+    await this.trySyncOperation("update", updatedTask);
+  }
+
+  /**
+   * 删除任务并同步
+   */
+  public async deleteTask(id: string): Promise<void> {
+    const task = await db.tasks.get(id);
+    if (!task) return;
+    await db.tasks.delete(id);
+    await this.trySyncOperation("delete", task);
   }
 
   /**

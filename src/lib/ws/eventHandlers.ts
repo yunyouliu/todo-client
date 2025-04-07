@@ -54,6 +54,18 @@ const EventHandlers = {
       if (isOwnMessage) return;
       console.log("心跳确认收到，连接保持活跃");
     });
+
+    //error
+    EventManager.on("error", (payload, isOwnMessage) => {
+      if (isOwnMessage) return;
+      console.error("WebSocket 错误:", payload);
+    });
+
+    //close
+    EventManager.on("close", (payload, isOwnMessage) => {
+      if (isOwnMessage) return;
+      console.log("WebSocket 关闭:", payload);
+    });
   },
 
   unregister() {
@@ -61,6 +73,7 @@ const EventHandlers = {
     EventManager.off("TASK_CREATE");
     EventManager.off("TASK_UPDATE");
     EventManager.off("TASK_DELETE");
+    EventManager.off("HEARTBEAT_ACK");
   },
 };
 

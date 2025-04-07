@@ -9,15 +9,15 @@
 import React from "react";
 import Icon from "@/components/index/icon";
 const options = [
-  { label: "高优先级", color: "red", value: "high" },
-  { label: "中优先级", color: "yellow", value: "medium" },
-  { label: "低优先级", color: "blue", value: "low" },
-  { label: "无优先级", color: "none", value: "none" },
+  { label: "高优先级", color: "red", value: 3 },
+  { label: "中优先级", color: "yellow", value: 2 },
+  { label: "低优先级", color: "blue", value: 1 },
+  { label: "无优先级", color: "none", value: 0 },
 ];
 
 interface PriorityProps {
-  selected?: string | null;
-  setSelected: (value: string, lable: string) => void;
+  selected?: number | null ;
+  setSelected: (value: number, lable: string) => void;
 }
 
 const Priority: React.FC<PriorityProps> = ({
@@ -25,7 +25,7 @@ const Priority: React.FC<PriorityProps> = ({
   setSelected,
 }) => {
   // 处理选项点击事件
-  const handleClick = (optionValue: string, optionLabel: string) => {
+  const handleClick = (optionValue: number, optionLabel: string) => {
     setSelected(optionValue, optionLabel);
   };
 

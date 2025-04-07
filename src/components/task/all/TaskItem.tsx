@@ -3,7 +3,6 @@ import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
 import dayjs from "dayjs";
 import { useNavigate, useLocation, useSelector } from "umi";
-import { db } from "@/lib/db/database";
 import { useDispatch } from "umi";
 const TaskItem: React.FC<{
   id: string;
@@ -45,7 +44,7 @@ const TaskItem: React.FC<{
   const location = useLocation();
   const [matchTags, setMatchTags] = useState<string[]>([]);
   const textClass = useMemo(
-    () => (checked ? "text-[#19191933]" : "text-gray-800"),
+    () => (title == "" || checked ? "text-[#19191933]" : "text-gray-800"),
     [checked]
   );
   const dispatch = useDispatch();
@@ -53,18 +52,24 @@ const TaskItem: React.FC<{
   // 初始化操作类
   const handleTitleClick = useCallback(() => {
     if (!id) return;
+
     const pathParts = location.pathname.split("/");
     const lastPart = pathParts[pathParts.length - 1];
 
     let newPath;
-    if (/^\d+$/.test(lastPart)) {
-      newPath = location.pathname.replace(/\/\d+$/, `/${id}`);
-    } else {
+    if (/^[a-zA-Z]+$/.test(lastPart)) {
+      // 如果最后一部分是纯字母（表示 `task/{category}`），追加 id
       newPath = `${location.pathname}/${id}`;
+    } else {
+      // 如果最后一部分是 ID（`task/{category}/{id}`），替换为新的 ID
+      newPath = location.pathname.replace(/\/[^/]+$/, `/${id}`);
     }
 
-    navigate(newPath);
-    setIsEditing(true);
+    // 只有在新路径不同于当前路径时才跳转，防止多次触发无效跳转
+    if (newPath !== location.pathname) {
+      navigate(newPath);
+      setIsEditing(true);
+    }
   }, [id, location.pathname, navigate]);
 
   useEffect(() => {
@@ -80,6 +85,10 @@ const TaskItem: React.FC<{
       setIsEditing(false);
     }
   };
+
+  useEffect(() => {
+    setTitle(initialTitle || "无标题");
+  }, [initialTitle]);
 
   // 状态更新操作
   const handleStatusClick = useCallback(() => {
@@ -122,8 +131,6 @@ const TaskItem: React.FC<{
     return isActive() ? "bg-gray-100" : "bg-white";
   }, [isActive]);
 
-  const handlePriorityClick = useCallback(() => {}, [priority]);
-
   return (
     <div
       className={`relative flex items-center py-2 border-b hover:bg-gray-100 rounded-xl  p-4 group ${bgclassName}`}
@@ -151,7 +158,7 @@ const TaskItem: React.FC<{
             />
           ) : (
             <span
-              className={`truncate w-auto cursor-text min-h-[24px] leading-6 ${title == "无标题" ? "text-gray-800" : textClass}`}
+              className={`truncate w-auto cursor-text min-h-[24px] leading-6 ${textClass}`}
             >
               {title}
             </span>
@@ -170,6 +177,7 @@ const TaskItem: React.FC<{
               key={index}
               className="rounded-xl px-2 py-1 text-xs"
               style={{ backgroundColor: tag.color }}
+              onClick={() => {}}
             >
               {tag.name}
             </span>

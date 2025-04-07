@@ -25,11 +25,11 @@ export default defineConfig({
       changeOrigin: true, // 是否跨域
       pathRewrite: { "^/api": "" }, // 重写路径（可选）
     },
-      '/ws': {
-        target: 'ws://localhost:3000', // WebSocket 服务器地址
-        ws: true, // 开启 WebSocket 代理
-        changeOrigin: true,
-      },
+    "/ws": {
+      target: "ws://localhost:3000", // WebSocket 服务器地址
+      ws: true, // 开启 WebSocket 代理
+      changeOrigin: true,
+    },
   },
   mfsu: {},
   alias: {
@@ -47,13 +47,21 @@ export default defineConfig({
       layout: false,
     },
     {
+      path: "/singin/:t",
+      component: "@/pages/login/login",
+      layout: false,
+    },
+    {
       path: "/task",
       component: "@/pages/task/task",
       routes: [
         {
-          path: "/task/all/*",
+          path: "/task/all/",
           component: "@/pages/task/all",
-          exart:false
+        },
+        {
+          path: "/task/all/:id",
+          component: "@/pages/task/all",
         },
         {
           path: "/task/assignedme/",

@@ -11,20 +11,45 @@ import CrepeEditor from "@/components/task/input/CrepeEditor";
 import { useLocation } from "umi";
 import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
-import { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { formatRelativeDate } from "@/utils/getDateLabel";
 import { Input, Progress, Tooltip, Popover } from "antd";
 import Priority from "@/components/task/common/priority";
+import { useSelector, useDispatch, useParams } from "umi";
+import { debounce } from "lodash";
+import { ITask } from "@/lib/db/database";
 
+const getIconName = (priority: number): string => {
+  switch (priority) {
+    case 3:
+      return "high";
+    case 2:
+      return "low";
+    case 1:
+      return "medium";
+    default:
+      return "none";
+  }
+};
 const Detail: React.FC = () => {
   const location = useLocation();
   // 在组件顶部添加状态管理
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [priority, setPriority] = useState<"none" | "low" | "medium" | "high">(
-    "none"
-  );
-  const [progressPercent, setProgressPercent] = useState(10);
+  const dispatch = useDispatch();
+  const { tasks } = useSelector((state: any) => state.task);
+  const [filteredTask, setFilteredTask] = useState<any>(null);
+  const [title, setTitle] = useState("");
+  const { id } = useParams();
 
+  useEffect(() => {
+    // 精确筛选任务
+    const task = tasks?.find((task: ITask) => task._id === id) || null;
+    setFilteredTask(task);
+  }, [tasks, id]);
+
+  useEffect(() => {
+    setTitle(filteredTask?.title || "无标题");
+  }, [filteredTask,id]);
   // 处理点击事件
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -33,15 +58,89 @@ const Detail: React.FC = () => {
     const rawPercent = (clickPosition / containerWidth) * 100;
     // 特殊处理：如果点击非常靠左的位置，设置为 0%
     const finalPercent = rawPercent < 5 ? 0 : Math.round(rawPercent / 10) * 10;
-    setProgressPercent(Math.min(Math.max(finalPercent, 0), 100));
+    // setProgressPercent(Math.min(Math.max(finalPercent, 0), 100));
+    dispatch({
+      type: "task/updateTask",
+      payload: {
+        id,
+        changes: {
+          progress: finalPercent,
+        },
+      },
+    });
   };
 
-  const handleSelected = (value: string, label: string) => {
-    setPriority(value as "none" | "low" | "medium" | "high");
+  const handStausChange = () => {
+    dispatch({
+      type: "task/updateTask",
+      payload: {
+        id,
+        changes: {
+          status: filteredTask.status === 0 ? 2 : 0,
+        },
+      },
+    });
   };
 
-  const id = location.pathname.match(/\/task\/all\/(\d+)/)?.[1];
-  if (!id) return null;
+  const debouncedUpdateTitle = useMemo(
+    () =>
+      debounce((newTitle: string) => {
+        dispatch({
+          type: "task/updateTask",
+          payload: {
+            id,
+            changes: { title: newTitle },
+          },
+        });
+      }, 500),
+    [id, dispatch] // 依赖变化时重建
+  );
+
+  const handleSelected = (value: number, label: string) => {
+    dispatch({
+      type: "task/updateTask",
+      payload: {
+        id,
+        changes: {
+          priority: value,
+        },
+      },
+    });
+  };
+
+  const handTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle); // 立即更新本地状态
+    debouncedUpdateTitle(newTitle); // 触发防抖更新
+  };
+
+  const handleSaveContent = async (markdown: string) => {
+    if (!id || !markdown) return;
+    try {
+      await dispatch({
+        type: "task/updateTask",
+        payload: {
+          id,
+          changes: {
+            content: markdown,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("保存失败：", error);
+    }
+  };
+
+
+  // 组件卸载时取消未执行的防抖操作
+  useEffect(() => {
+    return () => {
+      debouncedUpdateTitle.cancel();
+    };
+  }, [debouncedUpdateTitle]);
+
+  const pathName = location.pathname.match(/\/task\/all\/(\d+)/)?.[1];
+  if (!pathName) return null;
   return (
     <div className="w-full h-full flex flex-col text-left">
       {/* 固定顶部 */}
@@ -51,7 +150,11 @@ const Detail: React.FC = () => {
         <div className="flex-1 flex items-center justify-between h-full">
           {/* 左侧区域 */}
           <div className="flex items-center gap-4">
-            <PriorityCheckbox checked={false} priority={priority} onClick={() => {}} />
+            <PriorityCheckbox
+              checked={filteredTask?.status === 2}
+              priority={filteredTask?.priority}
+              onClick={handStausChange}
+            />
             {/* 日期相关交互区域 */}
             <div className="flex items-center gap-1 hover:bg-gray-100 rounded-sm p-1 relative before:content-[''] before:block before:w-[1px] before:h-4 before:bg-gray-300 before:absolute before:-left-1.5">
               <div className="flex items-center rounded-sm cursor-pointer">
@@ -81,11 +184,14 @@ const Detail: React.FC = () => {
               arrow={false}
               overlayInnerStyle={{ padding: 1 }}
               content={
-                <Priority selected={priority} setSelected={handleSelected} />
+                <Priority
+                  selected={filteredTask?.priority}
+                  setSelected={handleSelected}
+                />
               }
             >
               <div className="p-1 rounded-sm cursor-pointer transition-colors">
-                <Icon name={priority} size={25} />
+                <Icon name={getIconName(filteredTask?.priority)} size={25} />
               </div>
             </Popover>
           </div>
@@ -102,7 +208,7 @@ const Detail: React.FC = () => {
         </div> */}
         {/* 进度条分割线 */}
         <Tooltip
-          title={`${progressPercent}%`}
+          title={`${filteredTask?.progress || 0}%`}
           overlayClassName="progress-tooltip"
           mouseEnterDelay={0.3}
           arrow={false}
@@ -113,32 +219,35 @@ const Detail: React.FC = () => {
             onClick={handleProgressClick}
           >
             <Progress
-              percent={progressPercent}
+              percent={filteredTask?.progress || 0}
               showInfo={false}
-              size={1}
               strokeColor="#1298EB" //蓝色
               trailColor="#f0f0f0"
-              className="!m-0 progress-divider"
+              className="!m-0 progress-divider bg-white"
             />
 
             {/* 点击热区指示器 */}
-            <div className="absolute inset-0 z-10 opacity-0 hover:opacity-20 hover:bg-gray-200 transition-opacity" />
+            <div className="absolute inset-0 z-100 opacity-0 hover:opacity-20 hover:bg-gray-200 transition-opacity" />
           </div>
         </Tooltip>
-        <div className="mt-6">
-          <Input
-            placeholder="准备做什么"
-            variant="borderless"
-            className="text-xl font-bold"
-          />
-        </div>
       </header>
 
       {/* 可滚动内容区域 */}
       <main className="flex-1 overflow-y-auto pt-4 pb-12">
         <div className="">
+          <Input
+            type="text"
+            placeholder="准备做什么"
+            variant="borderless"
+            className="text-xl font-bold"
+            value={title}
+            onChange={handTitleChange}
+            onBlur={() => debouncedUpdateTitle.flush()}
+          />
+        </div>
+        <div className="">
           <MilkdownProvider>
-            <CrepeEditor onSave={() => {}} />
+            <CrepeEditor onSave={handleSaveContent} defaultValue={filteredTask?.content}/>
           </MilkdownProvider>
         </div>
 
@@ -146,7 +255,7 @@ const Detail: React.FC = () => {
         <div className=""></div>
       </main>
       {/* 固定底部 */}
-      <footer className="h-12 bg-pink-200 sticky bottom-0 z-10 flex items-center px-4">
+      <footer className="h-12  sticky bottom-0 z-10 flex items-center px-4">
         <div className="flex space-x-4">{/* 这里可以添加底部操作按钮 */}</div>
       </footer>
     </div>
