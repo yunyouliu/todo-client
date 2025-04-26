@@ -8,11 +8,14 @@
  */
 import React from "react";
 import Icon from "@/components/index/icon";
+import { RightOutlined } from "@ant-design/icons";
 
 interface MenuItemProps {
   icon?: string; // 图标名称（可选）
-  label: string; // 显示文本
+  label: React.ReactNode | string; // 显示文本
   size?: number; // 图标大小（可选）
+
+  showArrow?: boolean;
   onClick?: () => void; // 点击事件处理函数（可选）
   showMore?: boolean; // 是否显示更多图标（可选）
   className?: string; // 自定义类名（可选）
@@ -24,6 +27,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
   size = 16, // 默认图标大小
   onClick,
   className = "",
+  showArrow = false,
+  showMore = false,
 }) => (
   <div
     className={`flex items-center h-9 p-2 text-sm rounded-sm cursor-pointer group focus:outline-none hover:cursor-auto hover:bg-gray-100 ${className}`}
@@ -31,6 +36,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
   >
     {icon && <Icon name={icon} size={size} />}
     <span className="ml-2 text-[#191919] text-[13px]">{label}</span>
+    {showArrow && (
+      <RightOutlined className="text-xs text-gray-400 group-hover:text-gray-600" />
+    )}
   </div>
 );
 

@@ -2,95 +2,65 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { PriorityCheckbox } from "@/components/task/common/CustomCheckbox";
 import Icon from "@/components/index/icon";
 import dayjs from "dayjs";
-import { useNavigate, useLocation, useSelector } from "umi";
-import { useDispatch } from "umi";
-const TaskItem: React.FC<{
-  id: string;
-  title?: string; // 任务标题
-  date?: string; // 任务日期
-  List?: string;
-  ListId?: string;
-  tags?: string[]; // 任务标签
-  priority?: number; // 任务优先级
-  checked?: boolean; // 是否完成
-  hasAttachment?: boolean; // 是否有附件
-  hasContent?: boolean; // 是否有内容
-  hasReminder?: boolean; // 是否有提醒
-  hasRepeat?: boolean; // 是否有重复
-}> = ({
-  id,
-  title: initialTitle,
-  date,
-  tags,
-  List = "收集箱",
-  ListId = "inbox",
-  priority = 0,
-  checked = false,
-  hasAttachment = false,
-  hasContent = false,
-  hasReminder = false,
-  hasRepeat = false,
-}) => {
-  const now = dayjs();
-  const taskDate = dayjs(date);
-  const isOverdue = taskDate.isBefore(now, "day");
-  const isThisYear = taskDate.year() === now.year();
-  const formattedDate = isThisYear
-    ? taskDate.format("M月D日")
-    : taskDate.format("YYYY年M月D日");
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(initialTitle || "无标题");
+import { useNavigate, useLocation, useSelector, useDispatch } from "umi";
+import { Tooltip } from "antd";
+
+const TaskItem: React.FC<{ id: string }> = ({ id }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [matchTags, setMatchTags] = useState<string[]>([]);
-  const textClass = useMemo(
-    () => (title == "" || checked ? "text-[#19191933]" : "text-gray-800"),
-    [checked]
-  );
   const dispatch = useDispatch();
+
+  const task = useSelector((state: any) =>
+    state.task.tasks.find((t: any) => t._id === id)
+  );
+
+  if (!task) return null;
+
+  const {
+    title: initialTitle,
+    dueDate,
+    tags,
+    priority = 0,
+    status,
+    attachments = [],
+    content,
+    reminders = [],
+    repeatFlag,
+    columnId,
+  } = task;
+
   const Tags = useSelector((state: any) => state.tag.tags);
-  // 初始化操作类
-  const handleTitleClick = useCallback(() => {
-    if (!id) return;
+  const checked = status === 2;
+  const hasAttachment = attachments.length > 0;
+  const hasContent = !!content;
+  const hasReminder = reminders.length > 0;
+  const hasRepeat = !!repeatFlag;
 
-    const pathParts = location.pathname.split("/");
-    const lastPart = pathParts[pathParts.length - 1];
+  const now = dayjs();
+  const taskDate = dueDate ? dayjs(dueDate) : null;
+  const isOverdue = taskDate?.isBefore(now, "day");
+  const isThisYear = taskDate?.year() === now.year();
+  const formattedDate = taskDate
+    ? isThisYear
+      ? taskDate.format("M月D日")
+      : taskDate.format("YYYY年M月D日")
+    : "";
 
-    let newPath;
-    if (/^[a-zA-Z]+$/.test(lastPart)) {
-      // 如果最后一部分是纯字母（表示 `task/{category}`），追加 id
-      newPath = `${location.pathname}/${id}`;
-    } else {
-      // 如果最后一部分是 ID（`task/{category}/{id}`），替换为新的 ID
-      newPath = location.pathname.replace(/\/[^/]+$/, `/${id}`);
-    }
-
-    // 只有在新路径不同于当前路径时才跳转，防止多次触发无效跳转
-    if (newPath !== location.pathname) {
-      navigate(newPath);
-      setIsEditing(true);
-    }
-  }, [id, location.pathname, navigate]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(initialTitle || "无标题");
+  const [matchTags, setMatchTags] = useState<string[]>([]);
 
   useEffect(() => {
     const matched = tags
-      ?.map((tag) => Tags.find((t: any) => t.name === tag))
+      ?.map((tag: any) => Tags.find((t: any) => t._id === tag))
       .filter(Boolean) as any[];
     setMatchTags(matched);
   }, [tags, Tags]);
-
-  /** 处理回车确认 */
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setIsEditing(false);
-    }
-  };
 
   useEffect(() => {
     setTitle(initialTitle || "无标题");
   }, [initialTitle]);
 
-  // 状态更新操作
   const handleStatusClick = useCallback(() => {
     dispatch({
       type: "task/updateTask",
@@ -101,7 +71,6 @@ const TaskItem: React.FC<{
     });
   }, [id, checked]);
 
-  // 标题更新操作
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setTitle(e.target.value);
@@ -115,28 +84,63 @@ const TaskItem: React.FC<{
     },
     [id]
   );
-  /** 失去焦点时确认修改 */
+
   const handleBlur = () => {
     if (!title.trim()) {
-      setTitle("无标题"); // 防止空值
+      setTitle("无标题");
     }
     setIsEditing(false);
   };
 
-  const isActive = useCallback(() => {
-    return location.pathname.match(id);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") setIsEditing(false);
+  };
+
+  const handleTitleClick = useCallback(() => {
+    const pathParts = location.pathname.split("/");
+    const lastPart = pathParts[pathParts.length - 1];
+
+    let newPath = /^[a-zA-Z]+$/.test(lastPart)
+      ? `${location.pathname}/${id}`
+      : location.pathname.replace(/\/[^/]+$/, `/${id}`);
+
+    if (newPath !== location.pathname) {
+      navigate(newPath);
+      setIsEditing(true);
+    }
   }, [id, location.pathname, navigate]);
+
+  const isActive = useCallback(() => {
+    return location.pathname.includes(id);
+  }, [id, location.pathname]);
 
   const bgclassName = useMemo(() => {
     return isActive() ? "bg-gray-100" : "bg-white";
   }, [isActive]);
 
+  const textClass = useMemo(
+    () => (title === "" || checked ? "text-[#19191933]" : "text-gray-800"),
+    [title, checked]
+  );
+
+  const showTime = useMemo(() => {
+    return taskDate
+      ? taskDate.isSame(now, "day")
+        ? "今天"
+        : taskDate.isSame(now.add(1, "day"), "day")
+          ? "明天"
+          : taskDate.isSame(now.subtract(1, "day"), "day")
+            ? "昨天"
+            : taskDate.isSame(now, "week")
+              ? taskDate.format("dddd") // 显示周几
+              : formattedDate
+      : "";
+  }, [taskDate, now]);
   return (
     <div
-      className={`relative flex items-center py-2 border-b hover:bg-gray-100 rounded-xl  p-4 group ${bgclassName}`}
+      className={`relative flex items-center py-2 border-b hover:bg-gray-100 rounded-xl p-4 group ${bgclassName}`}
       onClick={handleTitleClick}
     >
-      {/* 左侧内容：checkbox + 任务标题 */}
       <div className="flex items-center gap-2 overflow-hidden pr-20">
         <PriorityCheckbox
           priority={priority}
@@ -144,7 +148,6 @@ const TaskItem: React.FC<{
           onClick={handleStatusClick}
         />
         <div className="flex items-center w-full min-h-[24px]">
-          {/* 可编辑任务标题 */}
           {isEditing ? (
             <input
               type="text"
@@ -153,7 +156,7 @@ const TaskItem: React.FC<{
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               autoFocus
-              className={`w-full min-w-[100px] bg-transparent border-none min-h-[24px] leading-6 focus:outline-none ${textClass}  p-0 m-0 task-input`}
+              className={`w-full bg-transparent border-none leading-6 focus:outline-none ${textClass}`}
               placeholder="无标题"
             />
           ) : (
@@ -166,51 +169,57 @@ const TaskItem: React.FC<{
         </div>
       </div>
 
-      {/* 右侧内容 */}
       <div
-        className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center group-hover:bg-gray-100 ${bgclassName}  pl-2`}
+        className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center group-hover:bg-gray-100 ${bgclassName} pl-2`}
       >
-        {/* 标签 */}
         <div className="flex items-center gap-1 cursor-pointer">
           {matchTags?.map((tag: any, index) => (
             <span
               key={index}
-              className="rounded-xl px-2 py-1 text-xs"
+              className="rounded-xl px-[8px] py-0 text-[12px] hover:bg-primary-60 text-grey-100"
               style={{ backgroundColor: tag.color }}
-              onClick={() => {}}
             >
               {tag.name}
             </span>
           ))}
         </div>
-        {/* 清单 */}
+
         <span
-          className={`${checked ? "text-[#19191933]" : ""} text-xs ml-0.5 cursor-pointer hover:underline`}
-          onClick={() => navigate(`/list/${ListId}`)}
+          className={`text-xs ml-0.5 cursor-pointer hover:underline ${
+            checked ? "text-[#19191933]" : ""
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/inbox/${columnId || "inbox"}`);
+          }}
         >
-          {List}
+          收集箱
         </span>
 
-        {/* 图标 */}
         <div className="flex ml-1 items-center gap-0.5">
           {hasContent && <Icon name="doc" />}
           {hasAttachment && <Icon name="attachment" />}
           {hasReminder && <Icon name="clock" />}
           {hasRepeat && <Icon name="repeat" />}
         </div>
-
-        {/* 时间 */}
-        <span
-          className={`text-xs ml-2 cursor-pointer ${
-            checked
-              ? "text-[#19191933]"
-              : isOverdue
-                ? "text-red-500"
-                : "text-blue-500"
-          }`}
+        <Tooltip
+          arrow={false}
+          title={<span className="m-auto -translate-y-5">{showTime}</span>}
+          placement="top"
+          trigger="hover"
         >
-          {date && formattedDate}
-        </span>
+          <span
+            className={`text-xs ml-2 cursor-pointer ${
+              checked
+                ? "text-[#19191933]"
+                : isOverdue
+                  ? "text-red-500"
+                  : "text-blue-500"
+            }`}
+          >
+            {showTime}
+          </span>
+        </Tooltip>
       </div>
     </div>
   );

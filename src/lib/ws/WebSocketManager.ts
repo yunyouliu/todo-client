@@ -316,6 +316,7 @@ export class WebSocketManager {
         console.warn("心跳检测失败，尝试重连 WebSocket");
         this.connect();
       });
+      
     }, 30000); // 每30秒发送心跳
   }
 

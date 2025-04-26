@@ -131,6 +131,14 @@ export default defineConfig({
           path: "/task/trash/:id",
           component: "@/pages/task/trash",
         },
+        {
+          path: "/task/p",
+          component: "@/pages/task/project",
+        },
+        {
+          path: "/task/p/:id",
+          component: "@/pages/task/project",
+        },
       ],
     },
     {
@@ -148,6 +156,12 @@ export default defineConfig({
     {
       path: "/habit",
       component: "@/pages/habit/habit",
+    },
+    //404
+    {
+      path: "/*",
+      component: "@/pages/error/404",
+      layout: false,
     },
   ],
 });

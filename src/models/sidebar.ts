@@ -53,7 +53,7 @@ const SidebarModel: SidebarModelType = {
         size: 18,
         icon: "suoyou",
         label: "所有",
-        count: 11,
+        count: 1,
         visible: true,
       },
       {
@@ -61,7 +61,7 @@ const SidebarModel: SidebarModelType = {
         icon: `day${new Date().getDate()}`,
         label: "今天",
         size: 18,
-        count: 1,
+        count: 0,
         visible: true,
       },
       {
@@ -69,6 +69,7 @@ const SidebarModel: SidebarModelType = {
         icon: "mingtian",
         label: "明天",
         size: 18,
+        count: 0,
         visible: true,
       },
       {
@@ -76,7 +77,7 @@ const SidebarModel: SidebarModelType = {
         icon: `icons-${new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()}`,
         label: "最近7天",
         size: 22,
-        count: 1,
+        count: 0,
         visible: true,
       },
       {
@@ -84,6 +85,7 @@ const SidebarModel: SidebarModelType = {
         icon: "zhipai",
         label: "指派给我",
         size: 18,
+        count: 0,
         visible: true,
       },
       {
@@ -91,14 +93,16 @@ const SidebarModel: SidebarModelType = {
         icon: "shoujixiang",
         label: "收集箱",
         size: 18,
+        count: 0,
         visible: true,
       },
       {
         key: "/task/abstract",
         icon: "zhaiyao",
         label: "摘要",
-        layout:false,
+        layout: false,
         size: 18,
+        count: 0,
         visible: true,
       },
     ],
@@ -108,6 +112,7 @@ const SidebarModel: SidebarModelType = {
         icon: "renwu",
         size: 18,
         label: "已完成",
+        count: 0,
         visible: true,
       },
       {
@@ -115,12 +120,14 @@ const SidebarModel: SidebarModelType = {
         icon: "fangqi",
         size: 20,
         label: "已放弃",
+        count: 0,
         visible: true,
       },
       {
         key: "/task/trash",
         icon: "lajitong",
         size: 18,
+        count: 0,
         label: "垃圾桶",
         visible: true,
       },
@@ -130,6 +137,7 @@ const SidebarModel: SidebarModelType = {
         key: "/task/completed",
         icon: "renwu",
         size: 18,
+        count: 0,
         label: "已完成",
         visible: true,
       },
@@ -137,6 +145,7 @@ const SidebarModel: SidebarModelType = {
         key: "/task/abandoned",
         icon: "fangqi",
         size: 20,
+        count: 0,
         label: "已放弃",
         visible: true,
       },
@@ -144,6 +153,7 @@ const SidebarModel: SidebarModelType = {
         key: "/task/trash",
         icon: "lajitong",
         size: 18,
+        count: 0,
         label: "垃圾桶",
         visible: true,
       },
@@ -170,23 +180,13 @@ const SidebarModel: SidebarModelType = {
       return { ...state, sidebarData: payload };
     },
 
+
     // 重新排序侧边栏数据
     // 排序时可以选择只对可见项进行排序，排序后再恢复隐藏项
     reorderSidebarData(state: SidebarState, { payload }: AnyAction) {
-      // 如果需要隐藏项不参与排序，可以过滤掉不可见项
-      const visibleItems = state.sidebarData.filter((item) => item.visible);
-      const hiddenItems = state.sidebarData.filter((item) => !item.visible);
-
-      // 排序可见项
-      const sortedVisibleItems = visibleItems.sort((a, b) => {
-        // 根据自定义排序规则，比如按 key 排序
-        return a.key.localeCompare(b.key);
-      });
-
-      // 合并排序后的可见项和隐藏项
       return {
         ...state,
-        sidebarData: [...sortedVisibleItems, ...hiddenItems],
+        sidebarData: payload, // 直接使用传入的新顺序
       };
     },
 

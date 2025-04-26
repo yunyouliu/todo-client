@@ -19,59 +19,46 @@ const list = [
   {
     key: "1",
     label: "👋 欢迎",
-    count: 12,
+    count: 0,
   },
   {
     key: "2",
     label: "💼 工作任务",
-    count: 5,
+    count: 0,
   },
   {
     key: "3",
     label: "📦 购物清单",
-    count: 8,
+    count: 0,
   },
   {
     key: "4",
     label: "📖 学习安排",
-    count: 3,
+    count: 0,
   },
   {
     key: "5",
     label: "🎂 生日提醒",
-    count: 2,
+    count: 0,
   },
   {
     key: "6",
     label: "🏃 锻炼计划",
-    count: 7,
+    count: 0,
   },
   {
     key: "7",
     label: "🦄 心愿清单",
-    count: 1,
+    count: 0,
   },
   {
     key: "8",
     label: "🏡 个人备忘",
-    count: 10,
+    count: 0,
   },
 ];
 
-const tag = [
-  {
-    key: "10086",
-    label: "生日",
-    icon: "biaoqian",
-    color: "#35CB27",
-  },
-  {
-    key: "10087",
-    label: "生活",
-    icon: "biaoqian",
-    color: "rgb(241, 168, 58)",
-  },
-];
+const tag = JSON.parse(localStorage.getItem("tags") || "[]");
 
 // 定义侧边栏组件的属性接口
 interface SidebarProps {
@@ -93,15 +80,17 @@ interface SidebarProps {
   }>;
   activeKey: string;
   onItemClick?: (key: string, label: string) => void;
-  onDragEnd?: (result: any) => void;
 }
 
 // 实现一个可拖拽的侧边栏组件
-const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
+const Sidebar: React.FC<SidebarProps> = ({}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { activeKey } = useSelector((state: any) => state.active);
   const [open, setOpen] = useState(false);
+  const { sidebarData, buttomIcons } = useSelector(
+    (state: any) => state.sidebar
+  );
   const handleItemClick = (key: string, label: string) => {
     dispatch({
       type: "active/setActiveKey",
@@ -117,6 +106,20 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
     });
     navigate(`${key}`);
   };
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const newItems = Array.from(sidebarData);
+    const [movedItem] = newItems.splice(result.source.index, 1);
+    newItems.splice(result.destination.index, 0, movedItem);
+
+    dispatch({
+      type: "sidebar/reorderSidebarData",
+      payload: newItems,
+    });
+  };
+
   // Collapse项配置
   const items: CollapseProps["items"] = [
     {
@@ -170,12 +173,12 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
       ),
       children: (
         <div>
-          {tag.map((item) => (
+          {tag.map((item: { key: string; name: string; color?: string }) => (
             <SidebarItem
               key={item.key}
-              item={item}
+              item={{ key: item.key, label: item.name }}
               color={item.color}
-              onClick={() => handleItemClick(item.key, item.label)}
+              onClick={() => handleItemClick(item.key, item.name)}
             />
           ))}
         </div>
@@ -186,7 +189,7 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
   return (
     <div className="select-none scroll-smooth">
       <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
-        <DragDropContext onDragEnd={onDragEnd || (() => {})}>
+        <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="sidebar">
             {(provided) => (
               <div
@@ -194,30 +197,38 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >
-                {data.map((item, index) => (
-                  <Draggable
-                    key={item.key}
-                    draggableId={item.key}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={{
-                          cursor: "pointer",
-                          ...provided.draggableProps.style,
-                        }}
-                      >
-                        <SidebarItem
-                          item={item}
-                          onClick={() => handleItemClick(item.key, item.label)}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
+                {sidebarData.map(
+                  (
+                    item: { key: string; label: string; color?: string },
+                    index: number
+                  ) => (
+                    <Draggable
+                      key={item.key}
+                      draggableId={item.key}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{
+                            cursor: "pointer",
+                            ...provided.draggableProps.style,
+                          }}
+                        >
+                          <SidebarItem
+                            key={item.key}
+                            item={item}
+                            onClick={() =>
+                              handleItemClick(item.key, item.label)
+                            }
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  )
+                )}
                 {provided.placeholder}
               </div>
             )}
@@ -237,14 +248,16 @@ const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons, onDragEnd }) => {
 
         <Divider />
         <div className="p-2">
-          {bottomIcons.map((item) => (
-            <SidebarItem
-              key={item.key}
-              item={item}
-              color={item.color}
-              onClick={() => handleItemClick(item.key, item.label)}
-            />
-          ))}
+          {buttomIcons.map(
+            (item: { key: string; label: string; color?: string }) => (
+              <SidebarItem
+                key={item.key}
+                item={item}
+                color={item.color}
+                onClick={() => handleItemClick(item.key, item.label)}
+              />
+            )
+          )}
         </div>
         <Modal
           width="48%"

@@ -24,9 +24,9 @@ const getIconName = (priority: number): string => {
     case 3:
       return "high";
     case 2:
-      return "low";
-    case 1:
       return "medium";
+    case 1:
+      return "low";
     default:
       return "none";
   }
@@ -49,7 +49,7 @@ const Detail: React.FC = () => {
 
   useEffect(() => {
     setTitle(filteredTask?.title || "无标题");
-  }, [filteredTask,id]);
+  }, [filteredTask, id]);
   // 处理点击事件
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -113,24 +113,6 @@ const Detail: React.FC = () => {
     setTitle(newTitle); // 立即更新本地状态
     debouncedUpdateTitle(newTitle); // 触发防抖更新
   };
-
-  const handleSaveContent = async (markdown: string) => {
-    if (!id || !markdown) return;
-    try {
-      await dispatch({
-        type: "task/updateTask",
-        payload: {
-          id,
-          changes: {
-            content: markdown,
-          },
-        },
-      });
-    } catch (error) {
-      console.error("保存失败：", error);
-    }
-  };
-
 
   // 组件卸载时取消未执行的防抖操作
   useEffect(() => {
@@ -247,7 +229,7 @@ const Detail: React.FC = () => {
         </div>
         <div className="">
           <MilkdownProvider>
-            <CrepeEditor onSave={handleSaveContent} defaultValue={filteredTask?.content}/>
+            <CrepeEditor key={id} />
           </MilkdownProvider>
         </div>
 

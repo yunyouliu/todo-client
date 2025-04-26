@@ -1,14 +1,6 @@
-/*
- * @Descripttion: 智能待办事项任务分类
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2025-01-04 20:02:11
- * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-12 18:40:27
- */
 import React, { useState, useMemo, useCallback } from "react";
 import TextInput from "@/components/task/input/TextInput";
-import { Input, Collapse, ConfigProvider } from "antd";
+import { Input, Collapse, ConfigProvider, Empty } from "antd";
 import type { CollapseProps } from "antd";
 import TaskItem from "@/components/task/all/TaskItem";
 import { ITask } from "@/lib/db/database";
@@ -19,13 +11,27 @@ import { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { zh } from "chrono-node";
-import type { RepeatRule, RepeatType } from "@/components/task/common/Remind";
-import isBetween from "dayjs/plugin/isBetween";
+import type { RepeatRule } from "@/components/task/common/Remind";
 
-// 扩展 dayjs 功能
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.extend(isBetween);
+
+// 类型定义
+export interface GroupConfig {
+  key: string;
+  label: string;
+  filter: (tasks: ITask[], baseDate: Dayjs) => ITask[];
+  extra?: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+interface GenericTaskPageProps {
+  groups: GroupConfig[];
+  initDate?: string | Dayjs;
+  pageTitle?: string;
+  emptyImage?: React.ReactNode;
+  description?: string; // 可选的描述文本
+}
 
 const Span: React.FC<{ text: string; count: number }> = ({ text, count }) =>
   count > 0 ? (
@@ -37,17 +43,20 @@ const Span: React.FC<{ text: string; count: number }> = ({ text, count }) =>
     </>
   ) : null;
 
-const renderTaskItems = (tasks: ITask[]) =>
-  tasks.map((task) => <TaskItem key={task._id} id={task._id} />);
-
-const All: React.FC = () => {
+const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
+  groups,
+  initDate = dayjs(),
+  pageTitle = "收集箱",
+  emptyImage,
+  description = "没有任务",
+}) => {
   const [isInputVisible, setIsInputVisible] = useState(false);
-  const [textValue, setTextValue] = useState<string>("");
+  const [textValue, setTextValue] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<number | null>(0);
-  const [projectId, setProjectId] = useState<string>("");
+  const [projectId, setProjectId] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    dayjs().format("YYYY-MM-DD")
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs(initDate).format("YYYY-MM-DD")
   );
   const [remindData, setRemindData] = useState<{
     remindTime?: string;
@@ -55,124 +64,28 @@ const All: React.FC = () => {
     isAllDay?: boolean;
     repeatRule?: RepeatRule;
   }>({});
-  const generatedId = objectId().toHexString();
+
   const dispatch = useDispatch();
-  const { tasks } = useSelector((state: any) => state.task);
   const navigate = useNavigate(); // 使用useNavigate钩子
   const location = useLocation(); // 使用useLocation钩子
-  // 使用useMemo优化分组计算，依赖tasks变化
+  const { tasks } = useSelector((state: any) => state.task);
+  const generatedId = objectId().toHexString();
+  const baseDate = useMemo(
+    () => dayjs(initDate).tz("Asia/Shanghai"),
+    [initDate]
+  );
+
+  // 通用分组逻辑
   const groupedTasks = useMemo(() => {
-    const now = dayjs().tz("Asia/Shanghai");
-    const sevenDaysLater = now.add(7, "day");
+    return groups.map((group) => ({
+      ...group,
+      tasks: group.filter(tasks, baseDate),
+      count: group.filter(tasks, baseDate).length,
+    }));
+  }, [tasks, groups, baseDate]);
 
-    interface GroupedTasks {
-      completed: ITask[];
-      overdue: ITask[];
-      recentSevenDays: ITask[];
-      future: ITask[];
-      noDate: ITask[];
-    }
-
-    return {
-      completed: tasks.filter((task: ITask) => task.status === 2),
-      overdue: tasks.filter(
-        (task: ITask) =>
-          task.status !== 2 &&
-          task.dueDate &&
-          dayjs(task.dueDate).tz("Asia/Shanghai").isBefore(now, "day")
-      ),
-      recentSevenDays: tasks.filter(
-        // 新增的最近七天过滤逻辑
-        (task: ITask) =>
-          task.status !== 2 &&
-          task.dueDate &&
-          dayjs(task.dueDate)
-            .tz("Asia/Shanghai")
-            .isBetween(now, sevenDaysLater, "day", "[]")
-      ),
-      future: tasks.filter(
-        // 修改原upcoming为future
-        (task: ITask) =>
-          task.status !== 2 &&
-          task.dueDate &&
-          dayjs(task.dueDate).tz("Asia/Shanghai").isAfter(sevenDaysLater, "day")
-      ),
-      noDate: tasks.filter((task: ITask) => task.status !== 2 && !task.dueDate),
-    } as GroupedTasks;
-  }, [tasks]);
-
-  // 动态生成Collapse items，依赖groupedTasks
-  const items: CollapseProps["items"] = useMemo(
-    () =>
-      [
-        {
-          key: "1",
-          label: <Span text="已过期" count={groupedTasks.overdue.length} />,
-          children: renderTaskItems(groupedTasks.overdue),
-          extra: (
-            <span className="text-blue-500 text-xs cursor-pointer">顺延</span>
-          ),
-        },
-        {
-          key: "2",
-          label: (
-            <Span text="最近七天" count={groupedTasks.recentSevenDays.length} />
-          ),
-          children: renderTaskItems(groupedTasks.recentSevenDays),
-        },
-        {
-          key: "3",
-          label: <Span text="更远" count={groupedTasks.future.length} />,
-          children: renderTaskItems(groupedTasks.future),
-        },
-        {
-          key: "4",
-          label: <Span text="无日期" count={groupedTasks.noDate.length} />,
-          children: renderTaskItems(groupedTasks.noDate),
-        },
-        {
-          key: "5",
-          label: <Span text="已完成" count={groupedTasks.completed.length} />,
-          children: renderTaskItems(groupedTasks.completed),
-        },
-      ].filter((item) => item.children.length > 0),
-    [groupedTasks]
-  );
-
-  const handTextChange = useCallback((newValue: string) => {
-    setTextValue(newValue);
-    const priorityLabels = ["无优先级", "低优先级", "中优先级", "高优先级"];
-    const priorityRegex = new RegExp(
-      `\\[(${priorityLabels.join("|")})\\]`,
-      "g"
-    );
-    const matchedPriority = newValue.match(priorityRegex);
-    if (matchedPriority) {
-      const label = matchedPriority[0].replace(/\[|\]/g, ""); // 去掉方括号
-      const priorityIndex = priorityLabels.indexOf(label);
-      if (priorityIndex !== -1) {
-        setSelectedPriority(priorityIndex);
-      }
-    } else {
-      setSelectedPriority(0); // 如果没有匹配到优先级，设置为 null
-    }
-  }, []);
-
-  const handlePriorityChange = useCallback(
-    (newPriority: number, label: string) => {
-      setSelectedPriority(newPriority);
-      setTextValue((prevText) => {
-        const priorityRegex = /\[.*?\]/;
-        const existingPriorityMatch = prevText.match(priorityRegex);
-        return existingPriorityMatch
-          ? prevText.replace(existingPriorityMatch[0], `[${label}]`)
-          : `${prevText}[${label}]`;
-      });
-    },
-    []
-  );
-
-  const handleCreateTask = async () => {
+  // 保持原有的任务创建逻辑
+  const handleCreateTask = useCallback(async () => {
     if (!textValue.trim()) return;
     // 新建文本处理管道
     let finalTitle = textValue;
@@ -269,47 +182,111 @@ const All: React.FC = () => {
     } catch (error) {
       console.error("创建任务失败:", error);
     }
-  };
+  }, [textValue, selectedPriority, tags, projectId, selectedDate, remindData]);
+
+  // 保持原有的输入处理逻辑
+  const handleTextChange = useCallback((newValue: string) => {
+    setTextValue(newValue);
+    const priorityLabels = ["无优先级", "低优先级", "中优先级", "高优先级"];
+    const priorityRegex = new RegExp(
+      `\\[(${priorityLabels.join("|")})\\]`,
+      "g"
+    );
+    const matchedPriority = newValue.match(priorityRegex);
+    if (matchedPriority) {
+      const label = matchedPriority[0].replace(/\[|\]/g, ""); // 去掉方括号
+      const priorityIndex = priorityLabels.indexOf(label);
+      if (priorityIndex !== -1) {
+        setSelectedPriority(priorityIndex);
+      }
+    } else {
+      setSelectedPriority(0); // 如果没有匹配到优先级，设置为 null
+    }
+  }, []);
+
+  const handlePriorityChange = useCallback(
+    (newPriority: number, label: string) => {
+      setSelectedPriority(newPriority);
+      setTextValue((prevText) => {
+        const priorityRegex = /\[.*?\]/;
+        const existingPriorityMatch = prevText.match(priorityRegex);
+        return existingPriorityMatch
+          ? prevText.replace(existingPriorityMatch[0], `[${label}]`)
+          : `${prevText}[${label}]`;
+      });
+    },
+    []
+  );
+
+  // 生成Collapse配置
+  const collapseItems: CollapseProps["items"] = useMemo(
+    () =>
+      groupedTasks
+        .filter((group) => group.count > 0)
+        .map((group) => ({
+          key: group.key,
+          label: <Span text={group.label} count={group.count} />,
+          children: group.tasks.map((task) => (
+            <TaskItem key={task._id} id={task._id} />
+          )),
+          extra: group.extra,
+          defaultOpen: group.defaultOpen,
+        })),
+    [groupedTasks]
+  );
 
   return (
     <div className="container -mt-3 px-4">
-      {/* 输入区域 */}
       <Input
-        placeholder="+ 添加任务至收集箱"
+        placeholder={`+ 添加任务至${pageTitle}`}
         variant="filled"
         onFocus={() => setIsInputVisible(true)}
         className={`${isInputVisible || textValue ? "hidden" : ""}`}
         readOnly
       />
+
       <TextInput
         setRemindInfo={setRemindData}
-        initDate={dayjs().format("YYYY-MM-DD")}
+        initDate={selectedDate}
         value={textValue}
         projectId={projectId}
         setProjectId={setProjectId}
         selected={selectedPriority}
         onBlur={() => setIsInputVisible(false)}
         setTags={setTags}
-        onDateSelect={(date) => setSelectedDate(date)}
+        onDateSelect={setSelectedDate}
         tags={tags}
-        onChange={handTextChange}
+        onChange={handleTextChange}
         onPriorityChange={handlePriorityChange}
         className={`${!isInputVisible && !textValue ? "hidden" : ""}`}
         onSubmit={handleCreateTask}
       />
-      <div>
-        <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
+
+      <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
+        {collapseItems.length > 0 ? (
           <Collapse
-            defaultActiveKey={["1"]}
+            defaultActiveKey={groups
+              .filter((g) => g.defaultOpen)
+              .map((g) => g.key)}
             ghost
             size="small"
-            items={items}
+            items={collapseItems}
             className="bg-white text-left p-2 ml-2 select-none"
           />
-        </ConfigProvider>
-      </div>
+        ) : (
+          <Empty
+            image={emptyImage}
+            imageStyle={{ height: 80 }}
+            //居中显示
+            className="mt-48 h-full w-full"
+            description={
+              <span className="text-gray-400 text-xs">{description}</span>
+            }
+          />
+        )}
+      </ConfigProvider>
     </div>
   );
 };
 
-export default All;
+export default GenericTaskPage;

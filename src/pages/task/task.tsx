@@ -32,10 +32,7 @@ const Task: React.FC = () => {
   const isVerySmallScreen = useMediaQuery("(max-width: 632px)");
 
   // 计算是否显示第三个面板
-  const showThirdPanel =
-    !isSmallScreen &&
-    !isVerySmallScreen &&
-    location.pathname !== "/task/abstract";
+  const showThirdPanel = !isSmallScreen && !isVerySmallScreen;
 
   React.useEffect(() => {
     if (isVerySmallScreen) {
@@ -59,7 +56,6 @@ const Task: React.FC = () => {
               data={sidebarData}
               bottomIcons={buttomIcons}
               activeKey={activeKey}
-              onDragEnd={(result) => console.log("Drag ended", result)}
             />
           </Splitter.Panel>
 

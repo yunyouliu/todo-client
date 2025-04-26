@@ -1,5 +1,5 @@
 /*
- * @Descripttion: 
+ * @Descripttion:
  * @version: 1.0.0
  * @Author: yunyouliu
  * @Date: 2025-02-23 19:11:14
@@ -11,7 +11,7 @@ import { Avatar } from "antd";
 import { SyncOutlined } from "@ant-design/icons";
 import Icon from "@/components/index/icon";
 import SideBar from "@/components/task/common/Sidebar";
-import { SidebarItem } from "@/models/sidebar"// 定义类型
+import { SidebarItem } from "@/models/sidebar"; // 定义类型
 import UserPopover from "./UserPopover";
 
 interface DrawerContentProps {
@@ -20,7 +20,6 @@ interface DrawerContentProps {
   buttomIcons: SidebarItem[];
   activeKey: string;
   onItemClick: (key: string, label: string) => void;
-  onDragEnd: (result: any) => void;
 }
 
 const DrawerContent: React.FC<DrawerContentProps> = ({
@@ -29,8 +28,8 @@ const DrawerContent: React.FC<DrawerContentProps> = ({
   buttomIcons,
   activeKey,
   onItemClick,
-  onDragEnd,
 }) => {
+  const [Flag, setFlag] = React.useState(false);
   return (
     <>
       <div className="flex items-center justify-between px-4 pt-6 fixed bg-white w-[75%] z-20">
@@ -40,8 +39,12 @@ const DrawerContent: React.FC<DrawerContentProps> = ({
       </div>
       <div className="flex gap-3 translate-y-6 items-center bg-white absolute right-5 z-20">
         <SyncOutlined
-          spin={false}
-          style={{ fontSize: "20px" }}
+          onClick={() => {
+            setFlag(true);
+            setTimeout(() => setFlag(false), 2000);
+          }}
+          spin={Flag}
+          style={{ fontSize: "24px" }}
           className="text-gray-400 text-lg cursor-pointer"
         />
         <Icon name="tongzhi1" className="cursor-pointer" size={30} />
@@ -53,7 +56,6 @@ const DrawerContent: React.FC<DrawerContentProps> = ({
           bottomIcons={buttomIcons}
           activeKey={activeKey}
           onItemClick={onItemClick}
-          onDragEnd={onDragEnd}
         />
       </div>
     </>

@@ -43,7 +43,7 @@ const TagModel: TagModelType = {
   namespace: "tag",
 
   state: {
-    tags: [], // 初始值为空，subscriptions 里再初始化
+    tags: [],
   },
 
   subscriptions: {

@@ -161,7 +161,6 @@ const Layouts: React.FC = () => {
             buttomIcons={drawerButtomIcons}
             activeKey={activeKey}
             onItemClick={(key, label) => handleItemClick(key, label)}
-            onDragEnd={(result) => console.log("Drag ended", result)}
           />
         </Drawer>
         <Layout className="h-full">

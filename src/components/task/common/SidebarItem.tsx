@@ -36,6 +36,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         isActive ? "bg-gray-100" : ""
       }`}
       onClick={onClick}
+      key={item.key}
     >
       {item.icon && <Icon name={item.icon} size={item.size} />}
       <span className="ml-2 text-[#191919]">{item.label}</span>
@@ -47,7 +48,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
           />
         )}
         <div className="w-[20px]  flex justify-end items-center">
-          {item.count && (
+          {item.count !== undefined && item.count > 0 && (
             <span className="text-gray-500 group-hover:hidden">
               {item.count}
             </span>

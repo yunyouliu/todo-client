@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
   return (
     <div className="bg-white h-full shadow-md w-12 flex flex-col items-center pt-4">
       {/* 用户头像 */}
-      <UserPopover avatar={avatarSrc} size={40} vip/>
+      <UserPopover avatar={avatarSrc} size={40} vip />
       {/* 菜单图标 */}
       <ul className="flex-1 flex flex-col items-center gap-4">
         {menuItems.map((item, index) => (
@@ -81,11 +81,12 @@ const Sidebar: React.FC<SidebarProps> = ({ menuItems, avatarSrc }) => {
         <Tooltip title="同步" placement="right" key="refresh" arrow={false}>
           <SyncOutlined
             onClick={() => {
-              setFlag(!Flag);
+              setFlag(true);
+              setTimeout(() => setFlag(false), 2000);
             }}
             spin={Flag}
             style={{ fontSize: "24px" }}
-            className="text-gray-400 text-lg  cursor-pointer"
+            className="text-gray-400 text-lg cursor-pointer"
           />
         </Tooltip>
         <Tooltip title="通知" placement="right" key="info" arrow={false}>
