@@ -38,6 +38,12 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
 
   const now = dayjs();
   const taskDate = dueDate ? dayjs(dueDate) : null;
+
+  // 检查 taskDate 是否有效
+  if (taskDate && !taskDate.isValid()) {
+    console.error("Invalid dueDate:", dueDate);
+  }
+
   const isOverdue = taskDate?.isBefore(now, "day");
   const isThisYear = taskDate?.year() === now.year();
   const formattedDate = taskDate
@@ -190,7 +196,7 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
           }`}
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/inbox/${columnId || "inbox"}`);
+            navigate(`/task/inbox/${columnId || "inbox"}`);
           }}
         >
           收集箱

@@ -56,7 +56,7 @@ const EventHandlers = {
     });
 
     //error
-    EventManager.on("error", (payload, isOwnMessage) => {
+    EventManager.on("ERROR", (payload, isOwnMessage) => {
       if (isOwnMessage) return;
       console.error("WebSocket 错误:", payload);
     });

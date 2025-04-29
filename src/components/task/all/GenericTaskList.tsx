@@ -23,6 +23,7 @@ export interface GroupConfig {
   filter: (tasks: ITask[], baseDate: Dayjs) => ITask[];
   extra?: React.ReactNode;
   defaultOpen?: boolean;
+  renderType?: "collapse" | "list";
 }
 
 interface GenericTaskPageProps {
@@ -55,7 +56,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
   const [selectedPriority, setSelectedPriority] = useState<number | null>(0);
   const [projectId, setProjectId] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState(
+  const [selectedDate, setSelectedDate] = useState<string>(
     dayjs(initDate).format("YYYY-MM-DD")
   );
   const [remindData, setRemindData] = useState<{
@@ -76,12 +77,18 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
   );
 
   // 通用分组逻辑
-  const groupedTasks = useMemo(() => {
-    return groups.map((group) => ({
+  const { collapseGroups, listGroups } = useMemo(() => {
+    const processed = groups.map((group) => ({
       ...group,
       tasks: group.filter(tasks, baseDate),
       count: group.filter(tasks, baseDate).length,
+      renderType: group.renderType || "collapse", // 默认使用折叠
     }));
+
+    return {
+      collapseGroups: processed.filter((g) => g.renderType === "collapse"),
+      listGroups: processed.filter((g) => g.renderType === "list"),
+    };
   }, [tasks, groups, baseDate]);
 
   // 保持原有的任务创建逻辑
@@ -89,7 +96,13 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
     if (!textValue.trim()) return;
     // 新建文本处理管道
     let finalTitle = textValue;
-    let finalDueDate = selectedDate ? new Date(selectedDate) : undefined;
+    let finalDueDate = selectedDate ? dayjs(selectedDate) : null;
+
+    // 严格验证日期
+    if (finalDueDate && !finalDueDate.isValid()) {
+      console.error("Invalid selectedDate:", selectedDate);
+      finalDueDate = null;
+    }
 
     // 阶段1：解析并移除日期信息
     const dateMatches = zh.parse(finalTitle);
@@ -104,7 +117,13 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       ).trim();
       // 转换日期对象
       const parsedDate = dayjs(firstMatch.start.date());
-      finalDueDate = parsedDate.toDate();
+      console.log("Parsed date:", parsedDate);
+      if (parsedDate.isValid()) {
+        finalDueDate = parsedDate;
+      } else {
+        console.error("Invalid parsed date:", firstMatch.text);
+        finalDueDate = null;
+      }
     }
 
     // 阶段2：移除优先级标签
@@ -120,43 +139,71 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       }`;
     };
     // 处理时间数据
+    // 处理时间数据
     const processTime = () => {
       if (remindData.timeRange) {
         return {
           startDate: remindData.timeRange[0].toDate(),
-          endDate: remindData.timeRange[1].toDate(),
-          isAllDay: remindData.isAllDay,
+          dueDate: remindData.timeRange[1].toDate(),
+          isAllDay: remindData.isAllDay || false,
         };
       }
+
+      const remindDayjs = dayjs(remindData.remindTime);
+      if (remindDayjs.isValid()) {
+        return {
+          dueDate: remindDayjs.toDate(),
+          isAllDay: remindData.isAllDay || false,
+        };
+      }
+
+      // 如果没有手动设置提醒，fallback到解析到的自然语言时间
+      if (finalDueDate && finalDueDate.isValid()) {
+        return {
+          dueDate: finalDueDate.toDate(),
+          isAllDay: false,
+        };
+      }
+
+      // 全都没有
       return {
-        dueDate: dayjs(remindData.remindTime).toDate(),
-        isAllDay: remindData.isAllDay,
+        dueDate: null,
+        isAllDay: false,
       };
     };
+
+    const { startDate, dueDate, isAllDay } = processTime();
+    console.log("处理后的时间数据:", { startDate, dueDate, isAllDay });
+
     const newTask: ITask = {
       _id: generatedId,
       title: finalTitle,
-      dueDate: finalDueDate,
+      dueDate,
       priority: selectedPriority || 0,
       tags,
-      projectId,
-      status: 0, // 初始状态为"进行中"
-      ...processTime(),
+      projectId: projectId === "" ? null : projectId,
+      status: 0,
+      startDate, // 注意只有timeRange模式下才有startDate
       repeatFlag: generateRRule(remindData.repeatRule),
-      reminders: remindData.remindTime ? [new Date(remindData.remindTime)] : [],
-      content: "", // 任务内容（可选）
-      attachments: [], // 附件（可选）
-      columnId: generatedId, // 默认列ID
-      creator: localStorage.getItem("user_id") || "", // 默认创建者
-      isDeleted: false, // 默认未删除
-      childIds: [], // 默认子任务ID
-      createdAt: new Date(), // 默认创建时间
-      updatedAt: new Date(), // 默认更新时间
+      reminders:
+        remindData.remindTime && dayjs(remindData.remindTime).isValid()
+          ? [new Date(remindData.remindTime)]
+          : [],
+      content: "",
+      attachments: [],
+      columnId: generatedId,
+      creator: localStorage.getItem("user_id") || "",
+      isDeleted: false,
+      childIds: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
       progress: 0,
       commentCount: 0,
-      isAllDay: remindData.isAllDay || false,
-      timeZone: "Asia/Shanghai", // 默认时区
+      isAllDay,
+      timeZone: "Asia/Shanghai",
     };
+
+    console.log("新建任务数据:", newTask);
 
     try {
       dispatch({
@@ -168,6 +215,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       setSelectedPriority(0);
       setTags([]);
       setProjectId("");
+      setSelectedDate(dayjs().format("YYYY-MM-DD"));
       dispatch({ type: "task/loadTasks" });
       const pathParts = location.pathname.split("/");
       const lastPart = pathParts[pathParts.length - 1];
@@ -221,7 +269,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
   // 生成Collapse配置
   const collapseItems: CollapseProps["items"] = useMemo(
     () =>
-      groupedTasks
+      collapseGroups
         .filter((group) => group.count > 0)
         .map((group) => ({
           key: group.key,
@@ -232,7 +280,17 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
           extra: group.extra,
           defaultOpen: group.defaultOpen,
         })),
-    [groupedTasks]
+    [collapseGroups]
+  );
+
+  // 生成直接展示的任务列表
+  const listTasks = useMemo(
+    () => listGroups.flatMap((group) => group.tasks),
+    [listGroups]
+  );
+  const hasTasks = useMemo(
+    () => groups.some((group) => group.filter(tasks, baseDate).length > 0),
+    [tasks, groups, baseDate]
   );
 
   return (
@@ -263,21 +321,49 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       />
 
       <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
-        {collapseItems.length > 0 ? (
-          <Collapse
-            defaultActiveKey={groups
-              .filter((g) => g.defaultOpen)
-              .map((g) => g.key)}
-            ghost
-            size="small"
-            items={collapseItems}
-            className="bg-white text-left p-2 ml-2 select-none"
-          />
+        {hasTasks ? (
+          <>
+            {/* 折叠分组 */}
+            {collapseItems.length > 0 && (
+              <Collapse
+                defaultActiveKey={collapseGroups
+                  .filter((g) => g.defaultOpen)
+                  .map((g) => g.key)}
+                ghost
+                size="small"
+                items={collapseItems}
+                className="bg-white text-left p-2 ml-2 select-none"
+              />
+            )}
+
+            {/* 直接展示的分组 */}
+            {listGroups.map(
+              (group) =>
+                group.tasks.length > 0 && (
+                  <div key={group.key} className="mt-4">
+                    <div className="text-xs font-bold text-slate-950 mb-2">
+                      {group.label} ({group.count})
+                    </div>
+                    {group.tasks.map((task) => (
+                      <TaskItem key={task._id} id={task._id} />
+                    ))}
+                  </div>
+                )
+            )}
+
+            {/* 直接展示的任务列表 */}
+            {listTasks.length > 0 && (
+              <div className="mt-4">
+                {listTasks.map((task) => (
+                  <TaskItem key={task._id} id={task._id} />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <Empty
             image={emptyImage}
             imageStyle={{ height: 80 }}
-            //居中显示
             className="mt-48 h-full w-full"
             description={
               <span className="text-gray-400 text-xs">{description}</span>

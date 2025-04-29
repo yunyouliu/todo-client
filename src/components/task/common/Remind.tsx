@@ -9,7 +9,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Segmented, Tooltip, Popover, Button, Switch } from "antd";
 import Icon from "@/components/index/icon";
-import { Calendar, TimePicker, DatePicker } from "antd";
+import { Calendar, TimePicker, DatePicker, message } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { RightOutlined } from "@ant-design/icons";
@@ -26,7 +26,7 @@ export type RepeatRule = {
 type RemindProps = {
   onSelect: (data: {
     remindTime: string;
-    timeRange?: [Dayjs, Dayjs];
+    timeRange?: [Dayjs, Dayjs] | null;
     isAllDay?: boolean;
     repeatRule?: RepeatRule;
   }) => void;
@@ -52,10 +52,7 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
   const [timeMode, setTimeMode] = useState<TimeMode>("日期");
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(initialDate);
   const [selectedTime, setSelectedTime] = useState<Dayjs | null>(null);
-  const [timeRange, setTimeRange] = useState<[Dayjs, Dayjs]>([
-    initialDate,
-    initialDate.add(1, "hour"),
-  ]);
+  const [timeRange, setTimeRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [isAllDay, setIsAllDay] = useState(false);
   const [reminderVisible, setReminderVisible] = useState(false);
   const [repeatVisible, setRepeatVisible] = useState(false);
@@ -63,6 +60,7 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
   const [repeatSetting, setRepeatSetting] = useState<RepeatType>(null);
   const [repeatRule, setRepeatRule] = useState<RepeatRule>({ type: null });
 
+  const [messageApi, contextHolder] = message.useMessage();
   //快速日期基于当前选中日期计算偏移
   const handleQuickDate = (action: () => Dayjs) => {
     const newDate = action()
@@ -70,34 +68,48 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
       .set("minute", selectedDate?.minute() || 0);
     setSelectedDate(newDate);
   };
+  const warning = () => {
+    messageApi.open({
+      type: "warning",
+      content: "请先选择时间",
+    });
+  };
 
   // 正确处理提醒选择
   const handleReminderSelect = (option: (typeof REMIND_OPTIONS)[0]) => {
-    setReminderSetting(option);
+    if (selectedTime || timeMode === "时间段") {
+      setReminderSetting(option);
+    }
     setReminderVisible(false);
   };
 
   // 完善：重复设置增加结束时间计算
   const handleRepeatSelect = (type: RepeatType) => {
-    // 根据重复类型计算重复结束时间
-    const untilDate =
-      type !== null
-        ? dayjs(selectedDate).add(
-            1,
-            type === "daily" // 如果是每日重复，结束时间为一年后
-              ? "year"
-              : type === "weekly" // 如果是每周重复，结束时间为一周后
+    if (repeatSetting === type) {
+      // 如果选择的是当前重复类型，则取消选择
+      setRepeatSetting(null);
+      setRepeatRule({ type: null });
+    } else {
+      // 根据重复类型计算重复结束时间
+      const untilDate =
+        type !== null
+          ? dayjs(selectedDate).add(
+              1,
+              type === "daily"
+                ? "year"
+                : type === "weekly"
                 ? "week"
-                : type === "monthly" // 如果是每月重复，结束时间为一个月后
-                  ? "month"
-                  : "year" // 默认情况，结束时间为一年后
-          ) // 临时默认规则
-        : null; // 如果没有选择重复类型，则结束时间为 null
+                : type === "monthly"
+                ? "month"
+                : "year"
+            )
+          : null;
 
-    // 设置重复类型
-    setRepeatSetting(type);
-    // 设置重复规则，包括类型和结束时间
-    setRepeatRule({ type, until: untilDate?.toISOString() });
+      // 设置重复类型
+      setRepeatSetting(type);
+      // 设置重复规则，包括类型和结束时间
+      setRepeatRule({ type, until: untilDate?.toISOString() });
+    }
     // 隐藏重复设置弹窗
     setRepeatVisible(false);
   };
@@ -108,16 +120,25 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
     if (initialDate) {
       const hour = initialDate.hour();
       const minute = initialDate.minute();
-      if ((hour === 0 || hour === 9) && minute === 0) {
+      if (
+        ((hour === 0 || hour === 9) && minute === 0) ||
+        isNaN(hour) ||
+        isNaN(minute)
+      ) {
         setSelectedTime(null);
       } else {
         setSelectedTime(dayjs().set("hour", hour).set("minute", minute));
       }
     }
+    console.log("selectedTime", selectedTime);
   }, [initialDate]);
 
   // 时间选择处理
   const handleTimeChange = (time: Dayjs | null) => {
+    if (!time) {
+      setSelectedTime(null);
+      return;
+    }
     setSelectedTime(time);
   };
 
@@ -125,16 +146,14 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
   const handleRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates && dates[0] && dates[1]) {
       setTimeRange([dates[0], dates[1]]);
+    } else {
+      setTimeRange(null);
     }
   };
 
   //全天模式切换时保持日期一致性
   const handleAllDayChange = (checked: boolean) => {
     setIsAllDay(checked);
-    setTimeRange((prev) => [
-      prev[0].startOf(checked ? "day" : "hour"),
-      prev[1].endOf(checked ? "day" : "hour"),
-    ]);
   };
 
   const handleConfirm = () => {
@@ -164,8 +183,8 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
       });
     } else {
       onSelect({
-        remindTime: timeRange[0].toISOString(),
-        timeRange: [timeRange[0], timeRange[1]],
+        remindTime: timeRange ? timeRange[0].toISOString() : "",
+        timeRange: timeRange ? [timeRange[0], timeRange[1]] : undefined,
         ...baseData,
       });
     }
@@ -174,7 +193,8 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
   //清除时重置所有相关状态
   const handleReset = () => {
     setSelectedDate(null);
-    setTimeRange([initialDate, initialDate.add(1, "hour")]);
+    setSelectedTime(null);
+    setTimeRange(null);
     setReminderSetting(REMIND_OPTIONS[0]);
     setRepeatSetting(null);
     setRepeatRule({ type: null });
@@ -232,6 +252,7 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
 
   return (
     <div className="w-72 p-2 bg-white rounded-lg shadow-lg">
+      {contextHolder}
       <div className="text-center w-56 m-auto">
         <Segmented<TimeMode>
           value={timeMode}
@@ -287,7 +308,8 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
                   format="HH:mm"
                   allowClear
                   className="w-full"
-                  placeholder="选择时间" // 添加占位符
+                  placeholder="选择时间"
+                  changeOnScroll
                 />
               </div>
               {/* 右侧箭头 */}
@@ -300,19 +322,8 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
           <RangePicker
             showTime={!isAllDay}
             format={isAllDay ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm"}
-            value={timeRange}
+            value={timeRange || undefined}
             onChange={handleRangeChange}
-            onOpenChange={(open) => {
-              if (!open && !timeRange[0] && !timeRange[1]) {
-                setTimeRange([initialDate, initialDate.add(1, "hour")]);
-                onSelect({
-                  remindTime: "",
-                  timeRange: undefined,
-                  isAllDay: undefined,
-                  repeatRule: undefined,
-                });
-              }
-            }}
             className="w-full"
           />
           <div className="flex items-center p-2 mt-2 rounded-lg cursor-pointer ">
@@ -329,7 +340,13 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
 
       <Popover
         open={reminderVisible}
-        onOpenChange={setReminderVisible}
+        onOpenChange={() => {
+          if (!selectedTime && timeMode === "日期") {
+            warning();
+          } else {
+            setReminderVisible(!reminderVisible);
+          }
+        }}
         trigger="click"
         className="w-full"
         content={
@@ -354,11 +371,16 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
         >
           {/* 左侧图标和文字 */}
           <div className="flex items-center space-x-3">
-            <Icon name={`${selectedTime ? "clock-copy" : "clock"}`} size={20} />
+            <Icon
+              name={`${selectedTime || timeMode == "时间段" ? "clock-copy" : "clock"}`}
+              size={20}
+            />
             <span
-              className={`text-xs ${selectedTime ? "text-blue-500" : "text-gray-400"}`}
+              className={`text-xs ${selectedTime || timeMode == "时间段" ? "text-blue-500" : "text-gray-400"}`}
             >
-              {reminderSetting.label}
+              {selectedTime || timeMode == "时间段"
+                ? reminderSetting.label
+                : "提醒"}
             </span>
           </div>
           {/* 右侧箭头 */}

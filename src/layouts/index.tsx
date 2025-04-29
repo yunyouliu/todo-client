@@ -87,11 +87,12 @@ const Layouts: React.FC = () => {
     const activeItem = [...sidebarData, ...buttomIcons].find((item) =>
       location.pathname.startsWith(item.key)
     );
-    dispatch({
-      type: "active/setActiveLabel",
-      payload: activeItem?.label || "",
-    });
-    console.log("activeItem", activeItem?.label);
+    if (activeItem) {
+      dispatch({
+        type: "active/setActiveLabel",
+        payload: activeItem?.label || "",
+      });
+    }
   }, [location.pathname, sidebarData, buttomIcons]);
 
   const handleItemClick = (key: string, lable: string) => {

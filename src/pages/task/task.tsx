@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Splitter, Tooltip } from "antd";
+import { Popover, Splitter, Tooltip } from "antd";
 import Sidebar from "@/components/task/common/Sidebar";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import {
@@ -13,6 +13,7 @@ import { SidebarItem } from "@/models/sidebar";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import Detail from "@/pages/task/detail";
 import Icon from "@/components/index/icon";
+import MenuItem from "@/components/task/common/MenuItem";
 
 const Task: React.FC = () => {
   const dispatch = useDispatch();
@@ -88,11 +89,38 @@ const Task: React.FC = () => {
                 </Tooltip>
                 <Tooltip title="更多" placement="bottom" arrow={false}>
                   <>
-                    <Icon
-                      name="more"
-                      size={28}
-                      className=" hover:bg-gray-100 p-1.5 rounded-md"
-                    />
+                    <Popover
+                      trigger="click"
+                      arrow={false}
+                      overlayInnerStyle={{ padding: 0 }}
+                      content={
+                        <div className="p-1.5 rounded-sm bg-white text-xs">
+                          <MenuItem
+                            className="rounded-lg"
+                            icon="qingkong"
+                            label="隐藏已完成"
+                            onClick={() => {
+                              navigate("/task/delete");
+                            }}
+                          />
+                          <MenuItem
+                            icon="dayin-dayinji"
+                            className="rounded-lg"
+                            label="打印"
+                            //打印当前页面
+                            onClick={() => {
+                              window.print();
+                            }}
+                          />
+                        </div>
+                      }
+                    >
+                      <Icon
+                        name="more"
+                        size={28}
+                        className=" hover:bg-gray-100 p-1.5 rounded-md"
+                      />
+                    </Popover>
                   </>
                 </Tooltip>
               </div>

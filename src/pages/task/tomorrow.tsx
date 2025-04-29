@@ -34,7 +34,11 @@ const Tomorrow: React.FC = () => {
 
   return (
     <div className="w-full">
-      <GenericTaskPage groups={defaultGroups} pageTitle="收集箱" />
+      <GenericTaskPage
+        groups={defaultGroups}
+        pageTitle="收集箱"
+        initDate={dayjs().add(1, "day")}
+      />
     </div>
   );
 };

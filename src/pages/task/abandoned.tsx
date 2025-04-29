@@ -1,17 +1,27 @@
-/*
- * @Descripttion: 
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2025-02-25 20:41:15
- * @LastEditors: yunyouliu
- * @LastEditTime: 2025-02-25 20:43:17
- */
-import React from 'react'
+import React from "react";
+import GenericTaskPage, {
+  GroupConfig,
+} from "@/components/task/all/GenericTaskList";
 
-const Abandoned:React.FC=()=> {
+const Abandoned: React.FC = () => {
+  const defaultGroups: GroupConfig[] = [
+    {
+      key: "abandoned",
+      label: "已放弃的任务",
+      filter: (tasks) => tasks.filter((task) => task.status === 4),
+      defaultOpen: true,
+    },
+  ];
+
   return (
-    <div>abandoned</div>
-  )
-}
+    <div className="w-full">
+      <GenericTaskPage
+        groups={defaultGroups}
+        pageTitle="已放弃的任务"
+        description="这里没有放弃的任务"
+      />
+    </div>
+  );
+};
 
-export default Abandoned
+export default Abandoned;

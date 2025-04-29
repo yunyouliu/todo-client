@@ -93,7 +93,7 @@ const TextInput: React.FC<TextInputProps> = ({
           onSelect={(data) => {
             setRemindInfo({
               remindTime: data.remindTime,
-              timeRange: data.timeRange,
+              timeRange: data.timeRange ?? undefined,
               isAllDay: data.isAllDay,
               repeatRule: data.repeatRule,
             });
@@ -156,6 +156,7 @@ const TextInput: React.FC<TextInputProps> = ({
           ref={ListRef}
           onProjectSelect={({ id, name }) => {
             setProjectId(id); // 设置传给父组件的 projectId
+            console.log(id, "项目ID"); // 打印项目ID
             setProjectName(name); // 设置回显显示的项目名称
             handlePopoverVisibility("project", false); // 关闭项目选择
           }}

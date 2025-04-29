@@ -8,7 +8,7 @@ export interface ITask {
   title: string; // 任务标题
   content: string; // 任务内容
   columnId?: string; // 所属列的ID
-  projectId: string; // 所属项目的ID
+  projectId?: string | null; // 所属项目的ID
   creator: string; // 创建者ID
   assignee?: string; // 指派者ID，可选
   status: number; // 任务状态码
@@ -20,7 +20,7 @@ export interface ITask {
   progress: number; // 进度百分比
   commentCount: number; // 评论数量
   startDate?: Date; // 开始日期，可选
-  dueDate?: Date; // 截止日期，可选
+  dueDate?: Date | null | undefined; // 截止日期，可选
   completedTime?: Date; // 完成时间，可选
   completedUserId?: string; // 完成者ID，可选
   isAllDay: boolean; // 是否全天任务

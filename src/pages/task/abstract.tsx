@@ -21,7 +21,7 @@ const Abstract: React.FC = () => {
           `);
         setVd(vditor);
       },
-      
+
       minHeight: 600,
       width: "100%",
     });

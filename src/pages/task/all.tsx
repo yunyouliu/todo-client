@@ -172,11 +172,17 @@ const All: React.FC = () => {
     []
   );
 
-  const handleCreateTask = async () => {
+  const handleCreateTask = useCallback(async () => {
     if (!textValue.trim()) return;
     // 新建文本处理管道
     let finalTitle = textValue;
-    let finalDueDate = selectedDate ? new Date(selectedDate) : undefined;
+    let finalDueDate = selectedDate ? dayjs(selectedDate) : null;
+
+    // 严格验证日期
+    if (finalDueDate && !finalDueDate.isValid()) {
+      console.error("Invalid selectedDate:", selectedDate);
+      finalDueDate = null;
+    }
 
     // 阶段1：解析并移除日期信息
     const dateMatches = zh.parse(finalTitle);
@@ -191,7 +197,12 @@ const All: React.FC = () => {
       ).trim();
       // 转换日期对象
       const parsedDate = dayjs(firstMatch.start.date());
-      finalDueDate = parsedDate.toDate();
+      if (parsedDate.isValid()) {
+        finalDueDate = parsedDate;
+      } else {
+        console.error("Invalid parsed date:", firstMatch.text);
+        finalDueDate = null;
+      }
     }
 
     // 阶段2：移除优先级标签
@@ -215,22 +226,34 @@ const All: React.FC = () => {
           isAllDay: remindData.isAllDay,
         };
       }
-      return {
-        dueDate: dayjs(remindData.remindTime).toDate(),
-        isAllDay: remindData.isAllDay,
-      };
+      const remindDayjs = dayjs(remindData.remindTime);
+      if (remindDayjs.isValid()) {
+        return {
+          dueDate: remindDayjs.toDate(),
+          isAllDay: remindData.isAllDay,
+        };
+      } else {
+        console.error("Invalid remind time:", remindData.remindTime);
+        return {
+          dueDate: null,
+          isAllDay: remindData.isAllDay,
+        };
+      }
     };
     const newTask: ITask = {
       _id: generatedId,
       title: finalTitle,
-      dueDate: finalDueDate,
+      dueDate: finalDueDate ? finalDueDate.toDate() : null,
       priority: selectedPriority || 0,
       tags,
-      projectId,
+      projectId: projectId === "" ? null : projectId,
       status: 0, // 初始状态为"进行中"
       ...processTime(),
       repeatFlag: generateRRule(remindData.repeatRule),
-      reminders: remindData.remindTime ? [new Date(remindData.remindTime)] : [],
+      reminders:
+        remindData.remindTime && dayjs(remindData.remindTime).isValid()
+          ? [new Date(remindData.remindTime)]
+          : [],
       content: "", // 任务内容（可选）
       attachments: [], // 附件（可选）
       columnId: generatedId, // 默认列ID
@@ -244,7 +267,7 @@ const All: React.FC = () => {
       isAllDay: remindData.isAllDay || false,
       timeZone: "Asia/Shanghai", // 默认时区
     };
-
+    console.log("新建任务数据:", newTask);
     try {
       dispatch({
         type: "task/addTask", // 确保action type正确
@@ -255,6 +278,7 @@ const All: React.FC = () => {
       setSelectedPriority(0);
       setTags([]);
       setProjectId("");
+      setSelectedDate(dayjs().set("hour", 9).format("YYYY-MM-DD"));
       dispatch({ type: "task/loadTasks" });
       const pathParts = location.pathname.split("/");
       const lastPart = pathParts[pathParts.length - 1];
@@ -269,7 +293,7 @@ const All: React.FC = () => {
     } catch (error) {
       console.error("创建任务失败:", error);
     }
-  };
+  }, [textValue, selectedPriority, tags, projectId, selectedDate, remindData]);
 
   return (
     <div className="container -mt-3 px-4">

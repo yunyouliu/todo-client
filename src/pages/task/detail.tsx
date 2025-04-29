@@ -238,7 +238,11 @@ const Detail: React.FC = () => {
       </main>
       {/* 固定底部 */}
       <footer className="h-12  sticky bottom-0 z-10 flex items-center px-4">
-        <div className="flex space-x-4">{/* 这里可以添加底部操作按钮 */}</div>
+        <div className="flex space-x-4">
+          <span>
+            
+          </span>
+        </div>
       </footer>
     </div>
   );

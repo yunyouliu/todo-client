@@ -15,48 +15,6 @@ import Icon from "@/components/index/icon";
 import { useState } from "react";
 
 // 👋 欢迎💼 工作任务📦 购物清单	📖学习安排🎂生日提醒🏃锻炼计划🦄心愿清单🏡个人备忘
-const list = [
-  {
-    key: "1",
-    label: "👋 欢迎",
-    count: 0,
-  },
-  {
-    key: "2",
-    label: "💼 工作任务",
-    count: 0,
-  },
-  {
-    key: "3",
-    label: "📦 购物清单",
-    count: 0,
-  },
-  {
-    key: "4",
-    label: "📖 学习安排",
-    count: 0,
-  },
-  {
-    key: "5",
-    label: "🎂 生日提醒",
-    count: 0,
-  },
-  {
-    key: "6",
-    label: "🏃 锻炼计划",
-    count: 0,
-  },
-  {
-    key: "7",
-    label: "🦄 心愿清单",
-    count: 0,
-  },
-  {
-    key: "8",
-    label: "🏡 个人备忘",
-    count: 0,
-  },
-];
 
 const tag = JSON.parse(localStorage.getItem("tags") || "[]");
 
@@ -91,7 +49,8 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
   const { sidebarData, buttomIcons } = useSelector(
     (state: any) => state.sidebar
   );
-  const handleItemClick = (key: string, label: string) => {
+  const { projects } = useSelector((state: any) => state.project);
+  const handleItemClick = (key: string, label: string, otherkey?: string) => {
     dispatch({
       type: "active/setActiveKey",
       payload: key,
@@ -104,7 +63,11 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
       type: "active/setIsOpen",
       payload: false,
     });
-    navigate(`${key}`);
+    if (otherkey) {
+      navigate(otherkey + key);
+    } else {
+      navigate(key);
+    }
   };
 
   const handleDragEnd = (result: any) => {
@@ -143,11 +106,11 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
       ),
       children: (
         <div>
-          {list.map((item) => (
+          {projects.map((item: any) => (
             <SidebarItem
-              key={item.key}
-              item={item}
-              onClick={() => handleItemClick(item.key, item.label)}
+              key={item._id}
+              item={{ key: item._id, label: item.name }}
+              onClick={() => handleItemClick(item._id, item.name, "/task/p/")}
             />
           ))}
         </div>
