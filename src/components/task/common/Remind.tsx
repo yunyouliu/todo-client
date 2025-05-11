@@ -98,10 +98,10 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
               type === "daily"
                 ? "year"
                 : type === "weekly"
-                ? "week"
-                : type === "monthly"
-                ? "month"
-                : "year"
+                  ? "week"
+                  : type === "monthly"
+                    ? "month"
+                    : "year"
             )
           : null;
 
@@ -271,10 +271,7 @@ const Remind: React.FC<RemindProps> = ({ onSelect, initDate }) => {
                   className="flex flex-col m-auto items-center rounded-lg justify-center hover:bg-gray-100"
                   onClick={() =>
                     handleQuickDate(() =>
-                      dayjs(selectedDate).add(
-                        offset,
-                        unit as dayjs.ManipulateType
-                      )
+                      dayjs().add(offset, unit as dayjs.ManipulateType)
                     )
                   }
                 >

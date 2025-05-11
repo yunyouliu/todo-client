@@ -15,9 +15,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { formatRelativeDate } from "@/utils/getDateLabel";
 import { Input, Progress, Tooltip, Popover } from "antd";
 import Priority from "@/components/task/common/priority";
-import { useSelector, useDispatch, useParams } from "umi";
+import { useSelector, useDispatch } from "umi";
 import { debounce } from "lodash";
 import { ITask } from "@/lib/db/database";
+import Remind from "@/components/task/common/Remind";
+import dayjs from "dayjs";
+import List from "@/components/task/common/List";
 
 const getIconName = (priority: number): string => {
   switch (priority) {
@@ -31,25 +34,62 @@ const getIconName = (priority: number): string => {
       return "none";
   }
 };
+
+const getTaskIdFromPath = (pathname: string): string | null => {
+  // 分割路径并过滤空值
+  const parts = pathname.split("/").filter(Boolean);
+  // ['task', 'p', '67fc8595...', 'task', '12345']
+
+  // 规则1：排除纯项目路径 /task/p/... 或 /task/t/...
+  if (parts.length === 3 && (parts[1] === "p" || parts[1] === "t")) {
+    return null; // 不提取项目ID
+  }
+
+  // 规则2：处理嵌套任务路径 /task/p/.../task/...
+  if (parts.length >= 5 && parts[3] === "task") {
+    return parts[4]; // 返回最后一段作为任务ID
+  }
+
+  // 规则3：普通任务路径 /task/[type]/...
+  if (parts.length >= 3) {
+    return parts[2]; // 返回第三段作为ID
+  }
+
+  return null;
+};
 const Detail: React.FC = () => {
   const location = useLocation();
   // 在组件顶部添加状态管理
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(
+    dayjs().format("YYYY-MM-DD HH:mm:ss")
+  );
   const dispatch = useDispatch();
   const { tasks } = useSelector((state: any) => state.task);
   const [filteredTask, setFilteredTask] = useState<any>(null);
   const [title, setTitle] = useState("");
-  const { id } = useParams();
+  const [PopoverVisible, setPopoverVisible] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectVisible, setProjectVisible] = useState(false);
+
+  // 获取任务ID（必须放在所有hooks之后）
+  const taskId = useMemo(() => {
+    return getTaskIdFromPath(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
-    // 精确筛选任务
-    const task = tasks?.find((task: ITask) => task._id === id) || null;
-    setFilteredTask(task);
-  }, [tasks, id]);
+    if (tasks.length === 0) {
+      dispatch({ type: "task/loadTasks" });
+    } else {
+      const task = tasks.find((t: ITask) => t._id === taskId) || null;
+      setFilteredTask(task);
+      setSelectedDate(task?.dueDate || dayjs().format("YYYY-MM-DD HH:mm:ss"));
+      setProjectId(task?.projectId || null); // 设置项目ID
+    }
+  }, [tasks, taskId, dispatch]);
 
   useEffect(() => {
     setTitle(filteredTask?.title || "无标题");
-  }, [filteredTask, id]);
+  }, [filteredTask, taskId]);
   // 处理点击事件
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -62,7 +102,7 @@ const Detail: React.FC = () => {
     dispatch({
       type: "task/updateTask",
       payload: {
-        id,
+        id: taskId,
         changes: {
           progress: finalPercent,
         },
@@ -74,7 +114,7 @@ const Detail: React.FC = () => {
     dispatch({
       type: "task/updateTask",
       payload: {
-        id,
+        id: taskId,
         changes: {
           status: filteredTask.status === 0 ? 2 : 0,
         },
@@ -88,25 +128,33 @@ const Detail: React.FC = () => {
         dispatch({
           type: "task/updateTask",
           payload: {
-            id,
+            id: taskId,
             changes: { title: newTitle },
           },
         });
       }, 500),
-    [id, dispatch] // 依赖变化时重建
+    [taskId, dispatch] // 依赖变化时重建
   );
 
   const handleSelected = (value: number, label: string) => {
     dispatch({
       type: "task/updateTask",
       payload: {
-        id,
+        id: taskId,
         changes: {
           priority: value,
         },
       },
     });
   };
+
+  const allProjects = useSelector((state: any) => state.project.projects);
+
+  const projectName = useMemo(() => {
+    if (!projectId) return null;
+    const p = allProjects.find((p: any) => p._id === projectId);
+    return p?.name || null;
+  }, [projectId, allProjects]);
 
   const handTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -120,9 +168,12 @@ const Detail: React.FC = () => {
       debouncedUpdateTitle.cancel();
     };
   }, [debouncedUpdateTitle]);
+  // 将条件判断移到hooks之后
+  if (!taskId) return null;
+  if (!filteredTask) {
+    return <></>; // 添加加载状态提示
+  }
 
-  const pathName = location.pathname.match(/\/task\/all\/(\d+)/)?.[1];
-  if (!pathName) return null;
   return (
     <div className="w-full h-full flex flex-col text-left">
       {/* 固定顶部 */}
@@ -138,24 +189,50 @@ const Detail: React.FC = () => {
               onClick={handStausChange}
             />
             {/* 日期相关交互区域 */}
-            <div className="flex items-center gap-1 hover:bg-gray-100 rounded-sm p-1 relative before:content-[''] before:block before:w-[1px] before:h-4 before:bg-gray-300 before:absolute before:-left-1.5">
-              <div className="flex items-center rounded-sm cursor-pointer">
-                <Icon
-                  name="rili"
-                  size={25}
-                  onClick={() => {
-                    /* 日期选择器逻辑 */
+            <Popover
+              open={PopoverVisible}
+              onOpenChange={(visible) => {
+                setPopoverVisible(visible);
+              }}
+              trigger="click"
+              placement="bottom"
+              arrow={false}
+              overlayInnerStyle={{ padding: 1 }}
+              content={
+                <Remind
+                  initDate={filteredTask?.dueDate}
+                  onSelect={(data) => {
+                    // 更新任务数据
+                    dispatch({
+                      type: "task/updateTask",
+                      payload: {
+                        id: taskId,
+                        changes: {
+                          dueDate: data.remindTime,
+                          isAllDay: data.isAllDay,
+                          repeatRule: data.repeatRule,
+                        },
+                      },
+                    });
+                    setSelectedDate(data.remindTime); // 更新本地状态
+                    setPopoverVisible(false); // 关闭弹出框
                   }}
                 />
+              }
+            >
+              <div className="flex items-center gap-1 select-none hover:bg-gray-100 rounded-sm p-1 relative before:content-[''] before:block before:w-[1px] before:h-4 before:bg-gray-300 before:absolute before:-left-1.5">
+                <div className="flex items-center rounded-sm cursor-pointer">
+                  <Icon name="rili" size={25} />
+                </div>
+                {formatRelativeDate(selectedDate) && (
+                  <span
+                    className={`text-sm ${formatRelativeDate(selectedDate)?.color === "red" ? "text-red-500" : "text-blue-500"}`}
+                  >
+                    {formatRelativeDate(selectedDate)?.label}
+                  </span>
+                )}
               </div>
-              {formatRelativeDate(selectedDate) && (
-                <span
-                  className={`text-sm ${formatRelativeDate(selectedDate)?.color === "red" ? "text-red-500" : "text-blue-500"}`}
-                >
-                  {formatRelativeDate(selectedDate)?.label}
-                </span>
-              )}
-            </div>
+            </Popover>
           </div>
 
           {/* 右侧优先级区域 */}
@@ -229,7 +306,7 @@ const Detail: React.FC = () => {
         </div>
         <div className="">
           <MilkdownProvider>
-            <CrepeEditor key={id} />
+            <CrepeEditor key={taskId} />
           </MilkdownProvider>
         </div>
 
@@ -237,11 +314,49 @@ const Detail: React.FC = () => {
         <div className=""></div>
       </main>
       {/* 固定底部 */}
-      <footer className="h-12  sticky bottom-0 z-10 flex items-center px-4">
-        <div className="flex space-x-4">
-          <span>
-            
-          </span>
+      <footer className="h-12 sticky bottom-0 z-10 flex items-center px-4 select-none">
+        <div className="flex space-x-3">
+          <Popover
+            open={projectVisible}
+            overlayInnerStyle={{ padding: 1 }}
+            onOpenChange={(visible) => {
+              setProjectVisible(visible);
+            }}
+            content={
+              <List
+                selectedProjectId={projectId || ""}
+                onProjectSelect={({ id, name }) => {
+                  setProjectId(id); // 设置项目ID
+                  dispatch({
+                    type: "task/updateTask",
+                    payload: {
+                      id: taskId,
+                      changes: {
+                        projectId: id,
+                      },
+                    },
+                  });
+                  setProjectVisible(false); // 关闭弹出框
+                }}
+              />
+            }
+            trigger="click"
+            placement="top"
+            arrow={false}
+          >
+            <div>
+              {projectName ? (
+                <span className="text-sm  rounded p-1 hover:bg-gray-100 mr-1">
+                  {projectName}
+                </span>
+              ) : (
+                <span className=" flex cursor-pointer  rounded-lg hover:bg-slate-100 p-0.5">
+                  <Icon name="move" size={25} />
+                  收集箱
+                </span>
+              )}
+            </div>
+          </Popover>
         </div>
       </footer>
     </div>

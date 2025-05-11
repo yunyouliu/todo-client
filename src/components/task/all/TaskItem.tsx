@@ -5,7 +5,10 @@ import dayjs from "dayjs";
 import { useNavigate, useLocation, useSelector, useDispatch } from "umi";
 import { Tooltip } from "antd";
 
-const TaskItem: React.FC<{ id: string }> = ({ id }) => {
+const TaskItem: React.FC<{ id: string; navigateTo?: string }> = ({
+  id,
+  navigateTo,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -30,6 +33,7 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
   } = task;
 
   const Tags = useSelector((state: any) => state.tag.tags);
+  const projects = useSelector((state: any) => state.project.projects);
   const checked = status === 2;
   const hasAttachment = attachments.length > 0;
   const hasContent = !!content;
@@ -55,11 +59,18 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(initialTitle || "无标题");
   const [matchTags, setMatchTags] = useState<string[]>([]);
+  const [projectName, setProjectName] = useState<string | null>(null);
 
   useEffect(() => {
     const matched = tags
       ?.map((tag: any) => Tags.find((t: any) => t._id === tag))
       .filter(Boolean) as any[];
+    const project = projects.find((p: any) => p._id === task.projectId);
+    if (project) {
+      setProjectName(project.name);
+    } else {
+      setProjectName(null);
+    }
     setMatchTags(matched);
   }, [tags, Tags]);
 
@@ -67,15 +78,20 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
     setTitle(initialTitle || "无标题");
   }, [initialTitle]);
 
-  const handleStatusClick = useCallback(() => {
-    dispatch({
-      type: "task/updateTask",
-      payload: {
-        id,
-        changes: { status: checked ? 0 : 2 },
-      },
-    });
-  }, [id, checked]);
+  const handleStatusClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.stopPropagation(); // 阻止事件冒泡，避免触发父元素的点击事件
+      e.preventDefault(); // 阻止默认行为，避免触发其他事件
+      dispatch({
+        type: "task/updateTask",
+        payload: {
+          id,
+          changes: { status: checked ? 0 : 2 },
+        },
+      });
+    },
+    [id, checked]
+  );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,12 +125,15 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
     let newPath = /^[a-zA-Z]+$/.test(lastPart)
       ? `${location.pathname}/${id}`
       : location.pathname.replace(/\/[^/]+$/, `/${id}`);
+    if (navigateTo) {
+      newPath = navigateTo + `/${id}`;
+    }
 
     if (newPath !== location.pathname) {
       navigate(newPath);
       setIsEditing(true);
     }
-  }, [id, location.pathname, navigate]);
+  }, [id, location.pathname, navigate, navigateTo]);
 
   const isActive = useCallback(() => {
     return location.pathname.includes(id);
@@ -184,6 +203,11 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
               key={index}
               className="rounded-xl px-[8px] py-0 text-[12px] hover:bg-primary-60 text-grey-100"
               style={{ backgroundColor: tag.color }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(`/task/t/${tag._id}`);
+              }}
             >
               {tag.name}
             </span>
@@ -195,11 +219,14 @@ const TaskItem: React.FC<{ id: string }> = ({ id }) => {
             checked ? "text-[#19191933]" : ""
           }`}
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
-            navigate(`/task/inbox/${columnId || "inbox"}`);
+            navigate(
+              task.projectId ? `/task/p/${task.projectId}` : "/task/inbox"
+            );
           }}
         >
-          收集箱
+          {projectName || "收集箱"}
         </span>
 
         <div className="flex ml-1 items-center gap-0.5">

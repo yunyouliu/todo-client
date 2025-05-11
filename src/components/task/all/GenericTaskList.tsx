@@ -23,6 +23,7 @@ export interface GroupConfig {
   filter: (tasks: ITask[], baseDate: Dayjs) => ITask[];
   extra?: React.ReactNode;
   defaultOpen?: boolean;
+
   renderType?: "collapse" | "list";
 }
 
@@ -31,7 +32,9 @@ interface GenericTaskPageProps {
   initDate?: string | Dayjs;
   pageTitle?: string;
   emptyImage?: React.ReactNode;
-  description?: string; // 可选的描述文本
+  description?: string;
+  navigateTo?: string;
+  isVisible?: boolean;
 }
 
 const Span: React.FC<{ text: string; count: number }> = ({ text, count }) =>
@@ -49,7 +52,9 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
   initDate = dayjs(),
   pageTitle = "收集箱",
   emptyImage,
+  isVisible = true,
   description = "没有任务",
+  navigateTo,
 }) => {
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [textValue, setTextValue] = useState("");
@@ -90,6 +95,8 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       listGroups: processed.filter((g) => g.renderType === "list"),
     };
   }, [tasks, groups, baseDate]);
+  console.log("collapseGroups:", collapseGroups);
+  console.log("listGroups:", listGroups);
 
   // 保持原有的任务创建逻辑
   const handleCreateTask = useCallback(async () => {
@@ -139,7 +146,6 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       }`;
     };
     // 处理时间数据
-    // 处理时间数据
     const processTime = () => {
       if (remindData.timeRange) {
         return {
@@ -152,6 +158,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       const remindDayjs = dayjs(remindData.remindTime);
       if (remindDayjs.isValid()) {
         return {
+          startDate: remindDayjs.toDate(),
           dueDate: remindDayjs.toDate(),
           isAllDay: remindData.isAllDay || false,
         };
@@ -167,6 +174,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
 
       // 全都没有
       return {
+        startDate: null,
         dueDate: null,
         isAllDay: false,
       };
@@ -183,7 +191,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
       tags,
       projectId: projectId === "" ? null : projectId,
       status: 0,
-      startDate, // 注意只有timeRange模式下才有startDate
+      startDate,
       repeatFlag: generateRRule(remindData.repeatRule),
       reminders:
         remindData.remindTime && dayjs(remindData.remindTime).isValid()
@@ -275,7 +283,7 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
           key: group.key,
           label: <Span text={group.label} count={group.count} />,
           children: group.tasks.map((task) => (
-            <TaskItem key={task._id} id={task._id} />
+            <TaskItem key={task._id} id={task._id} navigateTo={navigateTo} />
           )),
           extra: group.extra,
           defaultOpen: group.defaultOpen,
@@ -295,30 +303,34 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
 
   return (
     <div className="container -mt-3 px-4">
-      <Input
-        placeholder={`+ 添加任务至${pageTitle}`}
-        variant="filled"
-        onFocus={() => setIsInputVisible(true)}
-        className={`${isInputVisible || textValue ? "hidden" : ""}`}
-        readOnly
-      />
+      {isVisible && (
+        <>
+          <Input
+            placeholder={`+ 添加任务至${pageTitle}`}
+            variant="filled"
+            onFocus={() => setIsInputVisible(true)}
+            className={`${isInputVisible || textValue ? "hidden" : ""}`}
+            readOnly
+          />
 
-      <TextInput
-        setRemindInfo={setRemindData}
-        initDate={selectedDate}
-        value={textValue}
-        projectId={projectId}
-        setProjectId={setProjectId}
-        selected={selectedPriority}
-        onBlur={() => setIsInputVisible(false)}
-        setTags={setTags}
-        onDateSelect={setSelectedDate}
-        tags={tags}
-        onChange={handleTextChange}
-        onPriorityChange={handlePriorityChange}
-        className={`${!isInputVisible && !textValue ? "hidden" : ""}`}
-        onSubmit={handleCreateTask}
-      />
+          <TextInput
+            setRemindInfo={setRemindData}
+            initDate={selectedDate}
+            value={textValue}
+            projectId={projectId}
+            setProjectId={setProjectId}
+            selected={selectedPriority}
+            onBlur={() => setIsInputVisible(false)}
+            setTags={setTags}
+            onDateSelect={setSelectedDate}
+            tags={tags}
+            onChange={handleTextChange}
+            onPriorityChange={handlePriorityChange}
+            className={`${!isInputVisible && !textValue ? "hidden" : ""}`}
+            onSubmit={handleCreateTask}
+          />
+        </>
+      )}
 
       <ConfigProvider theme={{ token: { paddingSM: 0, paddingLG: 0 } }}>
         {hasTasks ? (
@@ -340,24 +352,19 @@ const GenericTaskPage: React.FC<GenericTaskPageProps> = ({
             {listGroups.map(
               (group) =>
                 group.tasks.length > 0 && (
-                  <div key={group.key} className="mt-4">
-                    <div className="text-xs font-bold text-slate-950 mb-2">
+                  <div key={group.key} className="mt-2">
+                    {/* <div className="text-xs font-bold text-slate-950 mb-2">
                       {group.label} ({group.count})
-                    </div>
+                    </div> */}
                     {group.tasks.map((task) => (
-                      <TaskItem key={task._id} id={task._id} />
+                      <TaskItem
+                        key={task._id}
+                        id={task._id}
+                        navigateTo={navigateTo}
+                      />
                     ))}
                   </div>
                 )
-            )}
-
-            {/* 直接展示的任务列表 */}
-            {listTasks.length > 0 && (
-              <div className="mt-4">
-                {listTasks.map((task) => (
-                  <TaskItem key={task._id} id={task._id} />
-                ))}
-              </div>
             )}
           </>
         ) : (

@@ -19,7 +19,7 @@ export interface ITask {
   childIds: string[]; // 子任务ID数组
   progress: number; // 进度百分比
   commentCount: number; // 评论数量
-  startDate?: Date; // 开始日期，可选
+  startDate?: Date | null | undefined;  // 开始日期，可选
   dueDate?: Date | null | undefined; // 截止日期，可选
   completedTime?: Date; // 完成时间，可选
   completedUserId?: string; // 完成者ID，可选

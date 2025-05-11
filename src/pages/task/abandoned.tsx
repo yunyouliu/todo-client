@@ -16,6 +16,7 @@ const Abandoned: React.FC = () => {
   return (
     <div className="w-full">
       <GenericTaskPage
+      isVisible={false}
         groups={defaultGroups}
         pageTitle="已放弃的任务"
         description="这里没有放弃的任务"

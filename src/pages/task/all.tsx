@@ -229,12 +229,14 @@ const All: React.FC = () => {
       const remindDayjs = dayjs(remindData.remindTime);
       if (remindDayjs.isValid()) {
         return {
+          startDate: remindDayjs.toDate(),
           dueDate: remindDayjs.toDate(),
           isAllDay: remindData.isAllDay,
         };
       } else {
         console.error("Invalid remind time:", remindData.remindTime);
         return {
+          startDate: null,
           dueDate: null,
           isAllDay: remindData.isAllDay,
         };

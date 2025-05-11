@@ -1,44 +1,72 @@
-/*
- * @Descripttion:
- * @version: 1.0.0
- * @Author: yunyouliu
- * @Date: 2025-02-21 16:01:56
- * @LastEditors: yunyouliu
- * @LastEditTime: 2025-03-21 00:47:42
- */
 import React, { useEffect, useState } from "react";
 import Vditor from "vditor";
 import "vditor/dist/index.css";
-import { Select } from "antd";
+import { useSelector } from "umi";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isBetween);
 
 const Abstract: React.FC = () => {
   const [vd, setVd] = useState<Vditor>();
+  const taskList = useSelector((state: any) => state.task.tasks); // 你可能需要根据实际路径修改
+
+  // 模拟当前周时间范围
+  const startOfWeek = dayjs().startOf("week").add(1, "day"); // 周一
+  const endOfWeek = dayjs().endOf("week").add(1, "day"); // 周日
+
+  const generateMarkdown = () => {
+    const completedTasks = taskList.filter(
+      (task: any) =>
+        task.status === 2 &&
+        dayjs(task.remindTime).isBetween(startOfWeek, endOfWeek, null, "[]")
+    );
+
+    const pendingTasks = taskList.filter(
+      (task: any) =>
+        task.status !== 2 &&
+        dayjs(task.remindTime).isBetween(startOfWeek, endOfWeek, null, "[]")
+    );
+    const completedList = completedTasks
+      .map(
+        (t: any) =>
+          `- [${dayjs(t.remindTime).format("M月D日")}] ${t.title || "无标题"}`
+      )
+      .join("\n");
+
+    const pendingList = pendingTasks
+      .map((t: any) => `- ${t.title || "无标题"}`)
+      .join("\n");
+
+    return `# ${startOfWeek.format("M月D日")}-${endOfWeek.format("M月D日")}
+
+#### ✅ 已完成
+${completedList || "暂无"}
+
+#### ❌ 未完成
+${pendingList || "暂无"}
+`;
+  };
+
   useEffect(() => {
     const vditor = new Vditor("vditor", {
       after: () => {
-        vditor.setValue(`# 2月23日-3月1日
-当前范围内没有符合条件的任务
-          `);
+        vditor.setValue(generateMarkdown());
         setVd(vditor);
       },
-
       minHeight: 600,
       width: "100%",
     });
-    // Clear the effect
+
     return () => {
       vd?.destroy();
       setVd(undefined);
     };
-  }, []);
+  }, [taskList]); // 当 taskList 改变时更新内容
+
   return (
     <div className="flex flex-col h-full w-full p-3">
-      <div className="flex -mt-4 justify-start gap-4 text-xs">
-        <Select defaultValue="上月" size="small" className="text-xs" />
-        <Select defaultValue="上月" size="small" />
-        <Select defaultValue="上月" size="small" />
-      </div>
-      <div id="vditor" className="vditor text-left  mt-2 !p-0" />
+      <div id="vditor" className="vditor text-left mt-2 !p-0" />
     </div>
   );
 };

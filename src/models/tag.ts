@@ -1,26 +1,36 @@
 import { Reducer, AnyAction, Subscription } from "umi";
-import { tagApi } from "@/api"; // 导入 tagApi
+import { tagApi } from "@/api";
+
+export interface ITag extends Document {
+  _id: string; // 标签唯一标识符
+  name: string; // 标签名称
+  user: string; // 所属用户
+  color?: string; // 标签颜色（如 #00FF00）
+  isDeleted: boolean; // 软删除标记
+  createdAt: Date;
+  updatedAt: Date;
+} // 引入ITag接口
 
 // 定义 TagState 类型
 export interface TagState {
-  tags: string[]; // 只存标签名称数组
+  tags: ITag[]; // 存储ITag对象数组
 }
 
 export interface TagModelType {
-  namespace: "tag"; // DVA model 的命名空间
-  state: TagState; // model 状态
+  namespace: "tag";
+  state: TagState;
   reducers: {
-    setTags: Reducer<TagState, AnyAction>; // 设置 tags 数据
-    addTag: Reducer<TagState, AnyAction>; // 添加新标签
-    removeTag: Reducer<TagState, AnyAction>; // 删除标签
+    setTags: Reducer<TagState, AnyAction>;
+    addTag: Reducer<TagState, AnyAction>;
+    removeTag: Reducer<TagState, AnyAction>;
   };
   subscriptions: {
-    setup: Subscription; // 订阅数据变化
+    setup: Subscription;
   };
 }
 
 // 从 localStorage 读取 tags 数据
-const loadTagsFromStorage = (): string[] => {
+const loadTagsFromStorage = (): ITag[] => {
   try {
     const storedTags = localStorage.getItem("tags");
     return storedTags ? JSON.parse(storedTags) : [];
@@ -31,7 +41,7 @@ const loadTagsFromStorage = (): string[] => {
 };
 
 // 持久化 tags 到 localStorage
-const saveTagsToStorage = (tags: string[]) => {
+const saveTagsToStorage = (tags: ITag[]) => {
   try {
     localStorage.setItem("tags", JSON.stringify(tags));
   } catch (error) {
@@ -48,7 +58,6 @@ const TagModel: TagModelType = {
 
   subscriptions: {
     setup({ dispatch }) {
-      // 从 tagApi 获取数据并存入 Redux Store
       const fetchTags = async () => {
         try {
           const response = await tagApi.getTags();
@@ -62,7 +71,6 @@ const TagModel: TagModelType = {
         }
       };
 
-      // 尝试从 localStorage 加载数据（如果 API 请求失败）
       const storedTags = loadTagsFromStorage();
       if (storedTags.length > 0) {
         dispatch({
@@ -70,10 +78,9 @@ const TagModel: TagModelType = {
           payload: storedTags,
         });
       } else {
-        fetchTags(); // 从 API 加载数据
+        fetchTags();
       }
 
-      // 监听 localStorage 变化
       window.addEventListener("storage", () => {
         const updatedTags = loadTagsFromStorage();
         dispatch({
@@ -85,23 +92,32 @@ const TagModel: TagModelType = {
   },
 
   reducers: {
-    // 设置 tags 数据
     setTags(state: TagState, { payload }: AnyAction) {
       saveTagsToStorage(payload);
       return { ...state, tags: payload };
     },
 
-    // 添加新标签
     addTag(state: TagState, { payload }: AnyAction) {
       const newTags = [...state.tags, payload];
       saveTagsToStorage(newTags);
+
+      // Sync with backend
+      tagApi.addTag(payload).catch((error) => {
+        console.error("Failed to add tag to backend:", error);
+      });
+
       return { ...state, tags: newTags };
     },
 
-    // 删除标签
     removeTag(state: TagState, { payload }: AnyAction) {
-      const newTags = state.tags.filter((tag) => tag !== payload);
+      const newTags = state.tags.filter((tag) => tag._id !== payload._id);
       saveTagsToStorage(newTags);
+
+      // Sync with backend
+      tagApi.removeTag(payload._id).catch((error) => {
+        console.error("Failed to remove tag from backend:", error);
+      });
+
       return { ...state, tags: newTags };
     },
   },

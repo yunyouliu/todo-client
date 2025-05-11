@@ -109,7 +109,6 @@ const CrepeEditor: React.FC<{}> = () => {
         "image-block": {
           onUpload: handleUpload,
         },
-        toolbar: {},
         placeholder: {
           text: "输入内容或使用/快速插入",
         },

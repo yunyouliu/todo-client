@@ -6,7 +6,7 @@ interface CustomCheckboxProps extends CheckboxProps {
   color?: string; // 允许自定义颜色
   borderColor?: string; // 允许自定义边框颜色
   checked?: boolean; // 是否选中
-  onClick?: () => void; // 点击事件
+  onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void; // 点击事件
 }
 
 export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
@@ -29,14 +29,21 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
   );
 };
 
-export const PriorityCheckbox = ({
+interface PriorityCheckboxProps {
+  priority: number;
+  checked: boolean;
+  onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+}
+
+interface PriorityColors {
+  color: string;
+  borderColor: string;
+}
+
+export const PriorityCheckbox: React.FC<PriorityCheckboxProps> = ({
   priority,
   checked,
   onClick,
-}: {
-  priority: number;
-  checked: boolean;
-  onClick: () => void;
 }) => {
   const priorityColors = new Map([
     [0, { color: "#d9d9d9", borderColor: "#d9d9d9" }],
@@ -46,11 +53,10 @@ export const PriorityCheckbox = ({
   ]);
 
   // 已完成状态下的样式
-  const completedStyle = checked
+  const completedStyle: PriorityColors = checked
     ? {
         color: "#a3a3a3",
         borderColor: "#a3a3a3",
-        textDecoration: "line-through",
       }
     : priorityColors.get(priority) || { color: "#000", borderColor: "#000" };
 

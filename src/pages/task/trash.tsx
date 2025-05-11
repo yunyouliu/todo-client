@@ -8,7 +8,7 @@ const Trash: React.FC = () => {
     {
       key: "trash",
       label: "回收站",
-      filter: (tasks) => tasks.filter((task) => task.isDeleted), 
+      filter: (tasks) => tasks.filter((task) => task.isDeleted),
       defaultOpen: true,
     },
   ];
@@ -19,6 +19,7 @@ const Trash: React.FC = () => {
         groups={defaultGroups}
         pageTitle="回收站"
         description="回收站是空的"
+        isVisible={false}
       />
     </div>
   );

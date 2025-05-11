@@ -16,6 +16,7 @@ const Completed: React.FC = () => {
   return (
     <div className="w-full">
       <GenericTaskPage
+      isVisible={false}
         groups={defaultGroups}
         pageTitle="已完成的任务"
         description="还没有完成的任务"

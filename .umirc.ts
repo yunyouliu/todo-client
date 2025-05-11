@@ -139,6 +139,22 @@ export default defineConfig({
           path: "/task/p/:id",
           component: "@/pages/task/project",
         },
+        {
+          path: "/task/p/:id/task/:taskId",
+          component: "@/pages/task/project",
+        },
+        {
+          path: "/task/t",
+          component: "@/pages/task/tags",
+        },
+        {
+          path: "/task/t/:id",
+          component: "@/pages/task/tags",
+        },
+        {
+          path: "/task/t/:id/task/:taskId",
+          component: "@/pages/task/tags",
+        },
       ],
     },
     {

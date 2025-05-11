@@ -4,44 +4,40 @@ import GenericTaskPage, {
 } from "@/components/task/all/GenericTaskList";
 import dayjs from "dayjs";
 import { useParams, useDispatch, useSelector } from "umi";
-const Project: React.FC = () => {
+const Tags: React.FC = () => {
   const dispatch = useDispatch();
   const { id } = useParams<{ id: string }>();
-  const [projectId, setProjectId] = React.useState<string | undefined>(id);
-  const project = useSelector((state: any) =>
-    state.project.projects.find((project: any) => project._id === projectId)
+  const [tagId, setTagId] = React.useState<string | undefined>(id);
+
+  const tags = useSelector((state: any) => state.tag.tags).filter(
+    (item: { isDeleted: boolean }) => item.isDeleted === false
   );
+  const tag = tags.find((tag: { _id: string }) => tag._id === tagId);
+
   useEffect(() => {
     if (id) {
-      setProjectId(id);
+      setTagId(id);
     }
-    if (project) {
+    if (tag) {
       dispatch({
         type: "active/setActiveLabel",
-        payload: project.name,
+        payload: tag.name,
       });
     }
-  }, [id, project]);
+  }, [id, tag]);
 
   const defaultGroups: GroupConfig[] = [
-    {
-      key: "overdue",
-      label: "已完成",
-      filter: (tasks, baseDate) =>
-        tasks.filter(
-          (task) =>
-            task.dueDate &&
-            dayjs(task.dueDate).isBefore(baseDate, "day") &&
-            task.status === 2
-        ),
-      defaultOpen: true,
-    },
     {
       key: "today",
       label: "任务",
       filter: (tasks, baseDate) =>
         tasks.filter(
-          (task) => task.projectId === projectId && task.status !== 2
+          (task) =>
+            task.tags &&
+            tag &&
+            tagId &&
+            task.tags.includes(tagId) &&
+            task.status !== 2
         ),
       defaultOpen: true,
       renderType: "list",
@@ -54,10 +50,10 @@ const Project: React.FC = () => {
         groups={defaultGroups}
         pageTitle="今日任务"
         description="今天没有任务了"
-        navigateTo={`/task/p/${projectId}/task`}
+        navigateTo={`/task/t/${tagId}/task`}
       />
     </div>
   );
 };
 
-export default Project;
+export default Tags;

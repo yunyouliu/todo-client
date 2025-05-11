@@ -5,6 +5,7 @@ import SelectableItem from "@/components/task/common/SelectableItem";
 import { db } from "@/lib/db/database";
 
 interface ListProps {
+  selectedProjectId?: string;
   onProjectSelect?: (project: { id: string; name: string }) => void;
 }
 
@@ -12,6 +13,19 @@ const List = forwardRef<InputRef, ListProps>((props, ref) => {
   const [value, setValue] = useState("");
   const [selected, setSelected] = useState("");
   const [options, setOptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (props.selectedProjectId) {
+      const matched = options.find(
+        (opt) => opt.key === props.selectedProjectId
+      );
+      if (matched) {
+        setSelected(matched.label);
+      } else {
+        setSelected("");
+      }
+    }
+  }, [props.selectedProjectId, options]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -24,7 +38,6 @@ const List = forwardRef<InputRef, ListProps>((props, ref) => {
       }));
       setOptions(formatted);
     };
-
     fetchProjects();
   }, []);
 
@@ -54,11 +67,22 @@ const List = forwardRef<InputRef, ListProps>((props, ref) => {
             option={item}
             selected={selected === item.label}
             onSelect={(option) => {
-              setSelected((option.label ?? "").toString());
-              props.onProjectSelect?.({
-                id: option.key.toString(),
-                name: (option.label ?? "").toString(),
-              });
+              const isSame = selected === option.label;
+              if (isSame) {
+                // 取消选择
+                setSelected("");
+                props.onProjectSelect?.({
+                  id: "",
+                  name: "",
+                });
+              } else {
+                // 正常选择
+                setSelected((option.label ?? "").toString());
+                props.onProjectSelect?.({
+                  id: option.key.toString(),
+                  name: (option.label ?? "").toString(),
+                });
+              }
             }}
           />
         ))}

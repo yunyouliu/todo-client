@@ -7,16 +7,22 @@
  * @LastEditTime: 2025-03-19 15:37:00
  */
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { Divider, Collapse, ConfigProvider, Modal } from "antd";
+import {
+  Divider,
+  Collapse,
+  ConfigProvider,
+  Modal,
+  Button,
+  ColorPicker,
+  Input,
+} from "antd";
 import type { CollapseProps } from "antd";
 import SidebarItem from "./SidebarItem";
 import { useSelector, useDispatch, useNavigate } from "umi";
 import Icon from "@/components/index/icon";
 import { useState } from "react";
-
-// 👋 欢迎💼 工作任务📦 购物清单	📖学习安排🎂生日提醒🏃锻炼计划🦄心愿清单🏡个人备忘
-
-const tag = JSON.parse(localStorage.getItem("tags") || "[]");
+import type { ITag } from "@/models/tag";
+import objectId from "bson-objectid";
 
 // 定义侧边栏组件的属性接口
 interface SidebarProps {
@@ -41,24 +47,38 @@ interface SidebarProps {
 }
 
 // 实现一个可拖拽的侧边栏组件
-const Sidebar: React.FC<SidebarProps> = ({}) => {
+const Sidebar: React.FC<SidebarProps> = ({ data, bottomIcons }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { activeKey } = useSelector((state: any) => state.active);
   const [open, setOpen] = useState(false);
-  const { sidebarData, buttomIcons } = useSelector(
-    (state: any) => state.sidebar
-  );
+  const [tagName, setTagName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#5E7CE0"); // 默认颜色蓝色
+  // const { sidebarData, buttomIcons } = useSelector(
+  //   (state: any) => state.sidebar
+  // );
   const { projects } = useSelector((state: any) => state.project);
+  const tags = useSelector((state: any) => state.tag.tags).filter(
+    (item: { isDeleted: boolean }) => item.isDeleted === false
+  );
   const handleItemClick = (key: string, label: string, otherkey?: string) => {
     dispatch({
       type: "active/setActiveKey",
       payload: key,
     });
-    dispatch({
-      type: "active/setActiveLabel",
-      payload: label,
-    });
+    if (otherkey == "/task/t/") {
+      console.log("#" + label);
+      dispatch({
+        type: "active/setActiveLabel",
+        payload: "#" + label,
+      });
+    } else {
+      dispatch({
+        type: "active/setActiveLabel",
+        payload: label,
+      });
+    }
+
     dispatch({
       type: "active/setIsOpen",
       payload: false,
@@ -73,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
-    const newItems = Array.from(sidebarData);
+    const newItems = Array.from(data);
     const [movedItem] = newItems.splice(result.source.index, 1);
     newItems.splice(result.destination.index, 0, movedItem);
 
@@ -94,13 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
             已使用8/9
           </span>
           <div className="hidden group-hover:block align-middle float-right mr-2 items-center ">
-            <Icon
-              name="add"
-              size={15}
-              onClick={(e) => {
-                e.stopPropagation(), setOpen(true);
-              }}
-            />
+            <Icon name="add" size={15} />
           </div>
         </div>
       ),
@@ -130,24 +144,52 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
           <div className="hover:text-pink-300 text-sm text-gray-400">标签</div>
           <div className="hidden group-hover:flex ml-auto gap-3 mr-2 text-pink-200">
             <Icon name="more" size={15} />
-            <Icon name="add" size={15} />
+            <Icon
+              name="add"
+              size={15}
+              onClick={(e) => {
+                e.stopPropagation(), setOpen(true);
+              }}
+            />
           </div>
         </div>
       ),
       children: (
         <div>
-          {tag.map((item: { key: string; name: string; color?: string }) => (
+          {tags.map((item: { _id: string; name: string; color?: string }) => (
             <SidebarItem
-              key={item.key}
-              item={{ key: item.key, label: item.name }}
+              key={item._id}
+              item={{ key: item._id, label: item.name }}
               color={item.color}
-              onClick={() => handleItemClick(item.key, item.name)}
+              onClick={() => handleItemClick(item._id, item.name, "/task/t/")}
             />
           ))}
         </div>
       ),
     },
   ];
+
+  const handSaveTag = () => {
+    if (!tagName.trim()) return;
+    const newTag: Partial<ITag> = {
+      _id: objectId().toString(), // objectid
+      name: tagName,
+      user: localStorage.getItem("user_id") || "", // 假设用户ID存储在localStorage
+      color: selectedColor,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    dispatch({
+      type: "tag/addTag",
+      payload: newTag,
+    });
+    setOpen(false);
+  };
+
+  const handCancel = () => {
+    setOpen(false);
+  };
 
   return (
     <div className="select-none scroll-smooth">
@@ -160,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
                 {...provided.droppableProps}
                 ref={provided.innerRef}
               >
-                {sidebarData.map(
+                {data.map(
                   (
                     item: { key: string; label: string; color?: string },
                     index: number
@@ -211,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
 
         <Divider />
         <div className="p-2">
-          {buttomIcons.map(
+          {bottomIcons.map(
             (item: { key: string; label: string; color?: string }) => (
               <SidebarItem
                 key={item.key}
@@ -223,8 +265,8 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
           )}
         </div>
         <Modal
-          width="48%"
-          title="新建清单"
+          closable
+          title={<span>添加标签</span>}
           open={open}
           onCancel={() => {
             setOpen(false);
@@ -233,9 +275,45 @@ const Sidebar: React.FC<SidebarProps> = ({}) => {
           mask={false}
           footer={null}
         >
-          <div className="flex ">
-            <div className="bg-white w-1/2">111</div>
-            <div className="bg-blue-300 w-1/2">111</div>
+          <div className="p-6 space-y-4">
+            <Input
+              type="text"
+              size="small"
+              placeholder="名称"
+              value={tagName}
+              onChange={(e) => setTagName(e.target.value)}
+              className="w-full  rounded-md p-2"
+            />
+            <div className="flex items-center space-x-4 mt-4">
+              <label className="block text-sm font-medium">颜色</label>
+              <ColorPicker
+                size="small"
+                value={selectedColor}
+                onChange={(color) => setSelectedColor(color.toHexString())} // 保存十六进制颜色值
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="default"
+                onClick={() => {
+                  handCancel();
+                  setOpen(false);
+                  setTagName("");
+                  setSelectedColor("#5E7CE0"); // 重置颜色
+                }}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                关闭
+              </Button>
+              <Button
+                type="primary"
+                onClick={handSaveTag}
+                disabled={!tagName.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                保存
+              </Button>
+            </div>
           </div>
         </Modal>
       </ConfigProvider>

@@ -105,7 +105,7 @@ const Layouts: React.FC = () => {
       icon: "renwu",
       activeIcon: "renwu-copy",
       label: "任务",
-      path: "/task",
+      path: "/task/all",
     },
     {
       icon: "rilishitu",
